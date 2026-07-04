@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: gdx-petty-cash
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APPROVER_PASSWORD
+        sync: false
