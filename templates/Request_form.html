@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}New Request{% endblock %}
+{% block content %}
+
+<div class="sheet">
+  <div class="letterhead">
+    <div>
+      <h1>PETTY CASH REQUEST</h1>
+      <div class="sub">Submit an expense request — no paper needed</div>
+    </div>
+    <div class="ref-box">
+      Request No.<br><strong>{{ ref_no }}</strong>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('submit_request') }}" id="requestForm">
+
+    <div class="meta-grid">
+      <div class="field">
+        <label>Requested by *</label>
+        <input type="text" name="requester" required value="{{ form.requester if form else '' }}">
+      </div>
+      <div class="field">
+        <label>Department / Site</label>
+        <input type="text" name="department" value="{{ form.department if form else '' }}">
+      </div>
+      <div class="field">
+        <label>Request date</label>
+        <input type="date" name="request_date" value="{{ form.request_date if form else today }}">
+      </div>
+      <div class="field">
+        <label>Purpose</label>
+        <input type="text" name="purpose" placeholder="Brief reason for this request" value="{{ form.purpose if form else '' }}">
+      </div>
+    </div>
+
+    <table id="itemsTable">
+      <thead>
+        <tr>
+          <th style="width:16%">Date</th>
+          <th>Description</th>
+          <th class="num" style="width:18%">Amount (₦)</th>
+          <th style="width:34px"></th>
+        </tr>
+      </thead>
+      <tbody id="itemsBody"></tbody>
+    </table>
+
+    <div class="row-controls">
+      <button type="button" class="add-row" id="addRow">+ Add line item</button>
+    </div>
+
+    <div class="totals">
+      <div class="totals-box">
+        <div class="totals-row gross">
+          <span>GROSS TOTAL</span>
+          <span id="grossTotal">₦0.00
