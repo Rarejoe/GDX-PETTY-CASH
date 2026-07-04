@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="sheet wide">
+  <h1>All requests</h1>
+
+  <div class="summary-cards">
+    {% for row in totals %}
+      <div class="card">
+        <div class="card-label">{{ row['status'] }}</div>
+        <div class="card-value">₦{{ '{:,.2f}'.format(row['total']) }}</div>
+        <div class="card-count">{{ row['count'] }} request{{ 's' if row['count'] != 1 else '' }}</div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="filter-row">
+    {% for s in ['All', 'Pending', 'Approved', 'Rejected', 'Paid'] %}
+      <a href="{{ url_for('dashboard', status=s) }}"
+         class="filter-pill {{ 'active' if status_filter == s else '' }}">{{ s }}</a>
+    {% endfor %}
+  </div>
+
+  <table class="list-table">
+    <thead>
+      <tr>
+        <th>Ref No.</th>
+        <th>Requester</th>
+        <th>Department</th>
+        <th>Purpose</th>
+        <th class="num">Amount</th>
+        <th>Status</th>
+        <th>Submitted</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in requests %}
+      <tr onclick="window.location='{{ url_for('request_detail', request_id=r['id']) }}'">
+        <td>{{ r['ref_no'] }}</td>
+        <td>{{ r['requester'] }}</td>
+        <td>{{ r['department'] or '—' }}</td>
+        <td>{{ r['purpose'] or '—' }}</td>
+        <td class="num">₦{{ '{:,.2f}'.format(r['gross_total']) }}</td>
+        <td><span class="status-badge status-{{ r['status']|lower }}">{{ r['status'] }}</span></td>
+        <td>{{ r['created_at'][:16] }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="empty">No requests yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
