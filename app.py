@@ -3,7 +3,7 @@ Petty Cash Request System
 --------------------------
 A small Flask web app that replaces paper petty cash request forms.
 
-- Anyone with the link can submit a request (multiple expense lines + signature).
+- Anyone with the link can submit a request (multiple expense lines + drawn signature).
 - Everything is stored centrally in a SQLite database (petty_cash.db).
 - A dashboard lists all requests and lets an approver mark them Approved / Rejected / Paid.
 - Approver actions are protected by a single shared password (set via APPROVER_PASSWORD).
@@ -24,9 +24,9 @@ from flask import (
     url_for, session, flash, g
 )
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "petty_cash.db")
+DB_PATH = os.path.join(os.path.dirname(_file_), "petty_cash.db")
 
-app = Flask(__name__)
+app = Flask(_name_)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 APPROVER_PASSWORD = os.environ.get("APPROVER_PASSWORD", "changeme123")
 
@@ -77,6 +77,10 @@ def init_db():
             FOREIGN KEY (request_id) REFERENCES requests (id)
         );
     """)
+    # Add signature_image column if it doesn't exist yet (safe migration)
+    cols = [row[1] for row in db.execute("PRAGMA table_info(requests)").fetchall()]
+    if "signature_image" not in cols:
+        db.execute("ALTER TABLE requests ADD COLUMN signature_image TEXT")
     db.commit()
     db.close()
 
@@ -124,10 +128,9 @@ def submit_request():
     db = get_db()
 
     requester = request.form.get("requester", "").strip()
-    department = request.form.get("department", "").strip()
-    purpose = request.form.get("purpose", "").strip()
     request_date = request.form.get("request_date", "").strip()
     signature_name = request.form.get("signature_name", "").strip()
+    signature_image = request.form.get("signature_image", "").strip()
 
     line_dates = request.form.getlist("line_date[]")
     line_descs = request.form.getlist("line_desc[]")
@@ -137,7 +140,9 @@ def submit_request():
     if not requester:
         errors.append("Requester's name is required.")
     if not signature_name:
-        errors.append("A typed signature is required to confirm the request.")
+        errors.append("Your name is required to confirm the request.")
+    if not signature_image:
+        errors.append("Please sign the request before submitting.")
 
     line_items = []
     for d, desc, amt in zip(line_dates, line_descs, line_amounts):
@@ -172,10 +177,10 @@ def submit_request():
     cur = db.execute("""
         INSERT INTO requests
             (ref_no, request_date, requester, department, purpose,
-             signature_name, signed_on, status, gross_total, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?)
-    """, (ref_no, request_date, requester, department, purpose,
-          signature_name, signed_on, gross_total, created_at))
+             signature_name, signature_image, signed_on, status, gross_total, created_at)
+        VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, 'Pending', ?, ?)
+    """, (ref_no, request_date, requester,
+          signature_name, signature_image, signed_on, gross_total, created_at))
     request_id = cur.lastrowid
 
     for item in line_items:
@@ -290,11 +295,8 @@ def update_status(request_id):
 # Entrypoint
 # ---------------------------------------------------------------------------
 
-if not os.path.exists(DB_PATH):
-    init_db()
-else:
-    init_db()  # safe no-op if tables already exist (CREATE TABLE IF NOT EXISTS)
+init_db()
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
