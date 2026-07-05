@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Approver Login{% endblock %}
+{% block content %}
+
+<div class="sheet narrow">
+  <h1>Approver login</h1>
+  <p class="sub">Enter the shared approver password to view and process requests.</p>
+  <form method="POST">
+    <div class="field">
+      <label>Password</label>
+      <input type="password" name="password" autofocus required>
+    </div>
+    <div class="actions">
+      <button type="submit" class="primary">Log in</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
