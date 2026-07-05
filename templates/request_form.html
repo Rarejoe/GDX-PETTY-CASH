@@ -5,8 +5,7 @@
 <div class="sheet">
   <div class="letterhead">
     <div>
-      <h1>PETTY CASH REQUEST</h1>
-      <div class="sub">Submit an expense request — no paper needed</div>
+      <h1>GDX PETTY CASH REQUEST</h1>
     </div>
     <div class="ref-box">
       Request No.<br><strong>{{ ref_no }}</strong>
@@ -21,16 +20,8 @@
         <input type="text" name="requester" required value="{{ form.requester if form else '' }}">
       </div>
       <div class="field">
-        <label>Department / Site</label>
-        <input type="text" name="department" value="{{ form.department if form else '' }}">
-      </div>
-      <div class="field">
         <label>Request date</label>
         <input type="date" name="request_date" value="{{ form.request_date if form else today }}">
-      </div>
-      <div class="field">
-        <label>Purpose</label>
-        <input type="text" name="purpose" placeholder="Brief reason for this request" value="{{ form.purpose if form else '' }}">
       </div>
     </div>
 
@@ -40,7 +31,7 @@
           <th style="width:16%">Date</th>
           <th>Description</th>
           <th class="num" style="width:18%">Amount (₦)</th>
-          <th style="width:34px"></th>
+          <th style="width:30px"></th>
         </tr>
       </thead>
       <tbody id="itemsBody"></tbody>
@@ -61,8 +52,17 @@
 
     <div class="signoff single">
       <div class="sig-block">
-        <label>Type your full name to sign this request *</label>
-        <input type="text" name="signature_name" required placeholder="e.g. Ade Bello">
+        <label>Your name *</label>
+        <input type="text" name="signature_name" id="signatureName" required placeholder="e.g. Ade Bello">
+      </div>
+      <div class="sig-block sig-pad-wrap">
+        <label>Sign here *</label>
+        <canvas class="sig-pad" id="sigPad"></canvas>
+        <div class="sig-tools">
+          <button type="button" id="clearSig">Clear signature</button>
+          <span class="sig-hint">Draw with your finger or mouse</span>
+        </div>
+        <input type="hidden" name="signature_image" id="signatureImage">
       </div>
     </div>
 
@@ -75,7 +75,6 @@
 
 <script>
 const itemsBody = document.getElementById('itemsBody');
-let rowIndex = 0;
 
 function formatMoney(n){
   return '₦' + (isNaN(n) ? 0 : n).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -110,6 +109,58 @@ function addRow(){
 document.getElementById('addRow').addEventListener('click', addRow);
 for(let i=0;i<3;i++) addRow();
 
+// ---- Signature pad ----
+const canvas = document.getElementById('sigPad');
+const ctx = canvas.getContext('2d');
+let drawing = false, hasDrawn = false;
+
+function resizeCanvas(){
+  const ratio = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const prevData = hasDrawn ? canvas.toDataURL() : null;
+  canvas.width = rect.width * ratio;
+  canvas.height = rect.height * ratio;
+  ctx.scale(ratio, ratio);
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#12294d';
+  if(prevData){
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
+    img.src = prevData;
+  }
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+}
+function start(e){ e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+function move(e){
+  if(!drawing) return;
+  e.preventDefault();
+  const p = getPos(e);
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+  hasDrawn = true;
+}
+function end(){ drawing = false; }
+
+canvas.addEventListener('mousedown', start);
+canvas.addEventListener('mousemove', move);
+window.addEventListener('mouseup', end);
+canvas.addEventListener('touchstart', start, {passive:false});
+canvas.addEventListener('touchmove', move, {passive:false});
+canvas.addEventListener('touchend', end);
+
+document.getElementById('clearSig').addEventListener('click', () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  hasDrawn = false;
+});
+
 document.getElementById('requestForm').addEventListener('submit', function(e){
   let hasValidLine = false;
   document.querySelectorAll('#itemsBody tr').forEach(tr => {
@@ -120,7 +171,14 @@ document.getElementById('requestForm').addEventListener('submit', function(e){
   if(!hasValidLine){
     e.preventDefault();
     alert('Please add at least one expense line with a description and amount.');
+    return;
   }
+  if(!hasDrawn){
+    e.preventDefault();
+    alert('Please sign the request before submitting.');
+    return;
+  }
+  document.getElementById('signatureImage').value = canvas.toDataURL('image/png');
 });
 </script>
 
