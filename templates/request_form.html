@@ -54,4 +54,74 @@
       <div class="totals-box">
         <div class="totals-row gross">
           <span>GROSS TOTAL</span>
-          <span id="grossTotal">₦0.00
+          <span id="grossTotal">₦0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="signoff single">
+      <div class="sig-block">
+        <label>Type your full name to sign this request *</label>
+        <input type="text" name="signature_name" required placeholder="e.g. Ade Bello">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="primary">Submit request</button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+const itemsBody = document.getElementById('itemsBody');
+let rowIndex = 0;
+
+function formatMoney(n){
+  return '₦' + (isNaN(n) ? 0 : n).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function recalcTotal(){
+  let total = 0;
+  document.querySelectorAll('.amt').forEach(inp => {
+    const v = parseFloat(inp.value);
+    if(!isNaN(v)) total += v;
+  });
+  document.getElementById('grossTotal').textContent = formatMoney(total);
+}
+
+function addRow(){
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="date" name="line_date[]"></td>
+    <td><input type="text" name="line_desc[]" placeholder="What was it for?"></td>
+    <td><input type="number" step="0.01" name="line_amount[]" class="amt" placeholder="0.00"></td>
+    <td class="rm"><button type="button" title="Remove line">✕</button></td>
+  `;
+  tr.querySelector('.amt').addEventListener('input', recalcTotal);
+  tr.querySelector('.rm button').addEventListener('click', () => {
+    if(itemsBody.children.length <= 1) return;
+    tr.remove();
+    recalcTotal();
+  });
+  itemsBody.appendChild(tr);
+}
+
+document.getElementById('addRow').addEventListener('click', addRow);
+for(let i=0;i<3;i++) addRow();
+
+document.getElementById('requestForm').addEventListener('submit', function(e){
+  let hasValidLine = false;
+  document.querySelectorAll('#itemsBody tr').forEach(tr => {
+    const desc = tr.querySelector('[name="line_desc[]"]').value.trim();
+    const amt = parseFloat(tr.querySelector('[name="line_amount[]"]').value);
+    if(desc && amt > 0) hasValidLine = true;
+  });
+  if(!hasValidLine){
+    e.preventDefault();
+    alert('Please add at least one expense line with a description and amount.');
+  }
+});
+</script>
+
+{% endblock %}
