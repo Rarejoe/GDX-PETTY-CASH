@@ -26,7 +26,7 @@ from flask import (
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "petty_cash.db")
 
-app = Flask(_name_)
+app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 APPROVER_PASSWORD = os.environ.get("APPROVER_PASSWORD", "changeme123")
 
