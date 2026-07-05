@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ req['ref_no'] }}{% endblock %}
+{% block content %}
+
+<div class="sheet">
+  <div class="letterhead">
+    <div>
+      <h1>{{ req['ref_no'] }}</h1>
+      <div class="sub">Submitted {{ req['created_at'][:16] }}</div>
+    </div>
+    <span class="status-badge status-{{ req['status']|lower }} large">{{ req['status'] }}</span>
+  </div>
+
+  <div class="meta-grid readonly">
+    <div class="field"><label>Requested by</label><div class="value">{{ req['requester'] }}</div></div>
+    <div class="field"><label>Department / Site</label><div class="value">{{ req['department'] or '—' }}</div></div>
+    <div class="field"><label>Request date</label><div class="value">{{ req['request_date'] or '—' }}</div></div>
+    <div class="field"><label>Purpose</label><div class="value">{{ req['purpose'] or '—' }}</div></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Description</th><th class="num">Amount</th></tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item['line_date'] or '—' }}</td>
+        <td>{{ item['description'] }}</td>
+        <td class="num">₦{{ '{:,.2f}'.format(item['amount']) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row gross">
+        <span>GROSS TOTAL</span>
+        <span>₦{{ '{:,.2f}'.format(req['gross_total']) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="signoff single readonly">
+    <div class="sig-block">
+      <label>Requester's signature</label>
+      <div class="value signature">{{ req['signature_name'] }}</div>
+      <div class="sig-date">Signed {{ req['signed_on'] }}</div>
+    </div>
+    {% if req['approver_name'] %}
+    <div class="sig-block">
+      <label>Actioned by</label>
+      <div class="value signature">{{ req['approver_name'] }}</div>
+      <div class="sig-date">{{ req['status'] }} on {{ req['approved_on'] }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <form method="POST" action="{{ url_for('update_status', request_id=req['id']) }}" class="approve-form">
+    <div class="field">
+      <label>Your name (approver)</label>
+      <input type="text" name="approver_name" required value="{{ req['approver_name'] or '' }}">
+    </div>
+    <div class="actions">
+      <button type="submit" name="status" value="Approved" class="primary">Approve</button>
+      <button type="submit" name="status" value="Rejected" class="danger">Reject</button>
+      <button type="submit" name="status" value="Paid" class="secondary">Mark Paid</button>
+    </div>
+  </form>
+
+  <a href="{{ url_for('dashboard') }}" class="back-link">← Back to dashboard</a>
+</div>
+
+{% endblock %}
