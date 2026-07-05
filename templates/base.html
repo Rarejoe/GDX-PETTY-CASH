@@ -9,7 +9,10 @@
 <body>
 
 <header class="topbar">
-  <a href="{{ url_for('new_request_form') }}" class="brand">Petty Cash Requests</a>
+  <a href="{{ url_for('new_request_form') }}" class="brand">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="GDX Equip">
+    GDX Petty Cash
+  </a>
   <nav>
     {% if session.get('is_approver') %}
       <a href="{{ url_for('dashboard') }}">Dashboard</a>
