@@ -13,9 +13,7 @@
 
   <div class="meta-grid readonly">
     <div class="field"><label>Requested by</label><div class="value">{{ req['requester'] }}</div></div>
-    <div class="field"><label>Department / Site</label><div class="value">{{ req['department'] or '—' }}</div></div>
     <div class="field"><label>Request date</label><div class="value">{{ req['request_date'] or '—' }}</div></div>
-    <div class="field"><label>Purpose</label><div class="value">{{ req['purpose'] or '—' }}</div></div>
   </div>
 
   <table>
@@ -45,8 +43,12 @@
   <div class="signoff single readonly">
     <div class="sig-block">
       <label>Requester's signature</label>
-      <div class="value signature">{{ req['signature_name'] }}</div>
-      <div class="sig-date">Signed {{ req['signed_on'] }}</div>
+      {% if req['signature_image'] %}
+        <img src="{{ req['signature_image'] }}" alt="Signature" style="max-width:260px; border-bottom:1.5px solid var(--line); padding-bottom:4px;">
+      {% else %}
+        <div class="value signature">{{ req['signature_name'] }}</div>
+      {% endif %}
+      <div class="sig-date">{{ req['signature_name'] }} — signed {{ req['signed_on'] }}</div>
     </div>
     {% if req['approver_name'] %}
     <div class="sig-block">
