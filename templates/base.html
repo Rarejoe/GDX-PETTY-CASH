@@ -17,8 +17,6 @@
     {% if session.get('is_approver') %}
       <a href="{{ url_for('dashboard') }}">Dashboard</a>
       <a href="{{ url_for('logout') }}">Log out</a>
-    {% else %}
-      <a href="{{ url_for('login') }}">Approver login</a>
     {% endif %}
   </nav>
 </header>
