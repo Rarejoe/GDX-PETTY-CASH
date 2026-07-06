@@ -27,8 +27,6 @@
       <tr>
         <th>Ref No.</th>
         <th>Requester</th>
-        <th>Department</th>
-        <th>Purpose</th>
         <th class="num">Amount</th>
         <th>Status</th>
         <th>Submitted</th>
@@ -37,16 +35,14 @@
     <tbody>
       {% for r in requests %}
       <tr onclick="window.location='{{ url_for('request_detail', request_id=r['id']) }}'">
-        <td>{{ r['ref_no'] }}</td>
-        <td>{{ r['requester'] }}</td>
-        <td>{{ r['department'] or '—' }}</td>
-        <td>{{ r['purpose'] or '—' }}</td>
-        <td class="num">₦{{ '{:,.2f}'.format(r['gross_total']) }}</td>
-        <td><span class="status-badge status-{{ r['status']|lower }}">{{ r['status'] }}</span></td>
-        <td>{{ r['created_at'][:16] }}</td>
+        <td data-label="Ref No.">{{ r['ref_no'] }}</td>
+        <td data-label="Requester">{{ r['requester'] }}</td>
+        <td data-label="Amount" class="num">₦{{ '{:,.2f}'.format(r['gross_total']) }}</td>
+        <td data-label="Status"><span class="status-badge status-{{ r['status']|lower }}">{{ r['status'] }}</span></td>
+        <td data-label="Submitted">{{ r['created_at'][:16] }}</td>
       </tr>
       {% else %}
-      <tr><td colspan="7" class="empty">No requests yet.</td></tr>
+      <tr><td colspan="5" class="empty">No requests yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>
