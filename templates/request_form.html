@@ -51,10 +51,6 @@
     </div>
 
     <div class="signoff single">
-      <div class="sig-block">
-        <label>Your name *</label>
-        <input type="text" name="signature_name" id="signatureName" required placeholder="e.g. Ade Bello">
-      </div>
       <div class="sig-block sig-pad-wrap">
         <label>Sign here *</label>
         <canvas class="sig-pad" id="sigPad"></canvas>
@@ -62,6 +58,7 @@
           <button type="button" id="clearSig">Clear signature</button>
           <span class="sig-hint">Draw with your finger or mouse</span>
         </div>
+        <input type="hidden" name="signature_name" id="signatureName">
         <input type="hidden" name="signature_image" id="signatureImage">
       </div>
     </div>
@@ -178,6 +175,7 @@ document.getElementById('requestForm').addEventListener('submit', function(e){
     alert('Please sign the request before submitting.');
     return;
   }
+  document.getElementById('signatureName').value = document.querySelector('[name="requester"]').value.trim();
   document.getElementById('signatureImage').value = canvas.toDataURL('image/png');
 });
 </script>
