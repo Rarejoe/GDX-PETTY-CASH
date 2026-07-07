@@ -508,7 +508,7 @@ if new_status in ("Approved", "Rejected"):
 elif new_status == "Paid":
     paid_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
 
-    cur.execute("""
+ cur.execute("""
         UPDATE requests
         SET status = %s, approver_name = %s, approved_on = %s
         WHERE id = %s
