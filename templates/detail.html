@@ -65,11 +65,17 @@
       <input type="text" name="approver_name" required value="{{ req['approver_name'] or '' }}">
     </div>
     <div class="actions">
-      <button type="submit" name="status" value="Approved" class="primary">Approve</button>
-      <button type="submit" name="status" value="Rejected" class="danger">Reject</button>
-      <button type="submit" name="status" value="Paid" class="secondary">Mark Paid</button>
-    </div>
-  </form>
+  <button type="submit" name="status" value="Approved" class="primary">Approve</button>
+  <button type="submit" name="status" value="Rejected" class="danger">Reject</button>
+  <button type="submit" name="status" value="Paid" class="secondary">Mark Paid</button>
+</div>
+</form>
+
+<form action="{{ url_for('archive_request', request_id=req['id']) }}" method="POST"
+      onsubmit="return confirm('Hide this request from the dashboard?');">
+    <button type="submit" class="secondary">Hide Request</button>
+</form>
+
 
   <a href="{{ url_for('dashboard') }}" class="back-link">← Back to dashboard</a>
 </div>
