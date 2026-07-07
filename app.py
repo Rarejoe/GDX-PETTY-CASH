@@ -25,9 +25,9 @@ from flask import (
     url_for, session, flash, g
 )
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "petty_cash.db")
+DB_PATH = os.path.join(os.path.dirname(_file_), "petty_cash.db")
 
-app = Flask(__name__)
+app = Flask(_name_)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 APPROVER_PASSWORD = os.environ.get("APPROVER_PASSWORD", "changeme123")
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
@@ -38,9 +38,10 @@ def send_approver_notification(ref_no, requester, gross_total):
     """Email the approver when a new request comes in. Fails silently if
     email isn't configured or the send fails, so it never blocks a submission."""
     if not RESEND_API_KEY or not APPROVER_EMAIL:
+        print("EMAIL SKIPPED: RESEND_API_KEY or APPROVER_EMAIL not set")
         return
     try:
-        requests.post(
+        resp = requests.post(
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
             json={
@@ -56,8 +57,9 @@ def send_approver_notification(ref_no, requester, gross_total):
             },
             timeout=10,
         )
-    except Exception:
-        pass
+        print(f"EMAIL RESPONSE: status={resp.status_code} body={resp.text}")
+    except Exception as ex:
+        print(f"EMAIL FAILED: {ex}")
 
 
 # ---------------------------------------------------------------------------
@@ -327,6 +329,6 @@ def update_status(request_id):
 
 init_db()
 
-if __name__ == "_main_":
+if _name_ == "_main_":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
