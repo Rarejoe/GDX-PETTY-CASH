@@ -162,9 +162,9 @@ def new_request_form():
     today = datetime.date.today().isoformat()
     return render_template("request_form.html", ref_no=ref_no, today=today)
     
- @app.route("/archive/<int:request_id>", methods=["POST"])
- @approver_required
- def archive_request(request_id):
+@app.route("/archive/<int:request_id>", methods=["POST"])
+@approver_required
+def archive_request(request_id):
     db = get_db()
     cur = db.cursor()
 
