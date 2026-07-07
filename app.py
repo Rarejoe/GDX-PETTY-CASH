@@ -276,29 +276,46 @@ def logout():
 def dashboard():
     db = get_db()
     cur = db.cursor()
+
     status_filter = request.args.get("status", "All")
 
-    if status_filter and status_filter != "All":
-        cur.execute(
-           SELECT * FROM requests
-        WHERE status = %s
-        AND archived = FALSE
-        ORDER BY created_at DESC,
-            (status_filter,)
-        )
+    if status_filter != "All":
+        cur.execute("""
+            SELECT *
+            FROM requests
+            WHERE status = %s
+              AND archived = FALSE
+            ORDER BY created_at DESC
+        """, (status_filter,))
     else:
-        cur.execute("SELECT * FROM requests ORDER BY created_at DESC")
+        cur.execute("""
+            SELECT *
+            FROM requests
+            WHERE archived = FALSE
+            ORDER BY created_at DESC
+        """)
+
     rows = cur.fetchall()
 
     cur.execute("""
-        SELECT status, COUNT(*) as count, COALESCE(SUM(gross_total), 0) as total
-        FROM requests GROUP BY status
+        SELECT
+            status,
+            COUNT(*) AS count,
+            COALESCE(SUM(gross_total), 0) AS total
+        FROM requests
+        WHERE archived = FALSE
+        GROUP BY status
     """)
     totals = cur.fetchall()
+
     cur.close()
 
-    return render_template("dashboard.html", requests=rows, totals=totals,
-                            status_filter=status_filter)
+    return render_template(
+        "dashboard.html",
+        requests=rows,
+        totals=totals,
+        status_filter=status_filter
+    )
 
 
 @app.route("/request/<int:request_id>")
