@@ -25,7 +25,7 @@ from flask import (
     url_for, session, flash, g
 )
 
-DB_PATH = os.path.join(os.path.dirname(_file_), "petty_cash.db")
+DB_PATH = os.path.join(os.path.dirname(__file__), "petty_cash.db")
 
 app = Flask(_name_)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
