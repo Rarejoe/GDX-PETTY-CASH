@@ -44,8 +44,10 @@ from flask import (
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 app = Flask(__name__)
-SUPABASE_URL = "YOUR_PROJECT_URL"
-SUPABASE_KEY = "YOUR_SERVICE_ROLE_KEY"
+import os
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
 supabase = create_client(
     SUPABASE_URL,
