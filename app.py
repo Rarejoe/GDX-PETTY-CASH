@@ -21,8 +21,8 @@ import os
 import datetime
 from functools import wraps
 
-import psycopg2
-import psycopg2.extras
+import psycopg
+from psycopg.rows import dict_row
 import requests
 from flask import (
     Flask, render_template, request, redirect,
@@ -72,7 +72,10 @@ def send_approver_notification(ref_no, requester, gross_total):
 
 def get_db():
     if "db" not in g:
-        g.db = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+        g.db = psycopg.connect(
+            DATABASE_URL,
+            row_factory=dict_row
+        )
     return g.db
 
 
@@ -84,7 +87,7 @@ def close_db(exception=None):
 
 
 def init_db():
-    db = psycopg2.connect(DATABASE_URL)
+    db = psycopg.connect(DATABASE_URL)
     cur = db.cursor()
     cur.execute("""
         CREATE TABLE IF NOT EXISTS requests (
