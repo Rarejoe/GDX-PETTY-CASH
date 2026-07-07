@@ -19,16 +19,45 @@ import sqlite3
 import datetime
 from functools import wraps
 
+import requests
 from flask import (
     Flask, render_template, request, redirect,
     url_for, session, flash, g
 )
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "petty_cash.db")
+DB_PATH = os.path.join(os.path.dirname(_file_), "petty_cash.db")
 
-app = Flask(__name__)
+app = Flask(_name_)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 APPROVER_PASSWORD = os.environ.get("APPROVER_PASSWORD", "changeme123")
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
+APPROVER_EMAIL = os.environ.get("APPROVER_EMAIL")
+
+
+def send_approver_notification(ref_no, requester, gross_total):
+    """Email the approver when a new request comes in. Fails silently if
+    email isn't configured or the send fails, so it never blocks a submission."""
+    if not RESEND_API_KEY or not APPROVER_EMAIL:
+        return
+    try:
+        requests.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
+            json={
+                "from": "GDX Petty Cash <onboarding@resend.dev>",
+                "to": [e.strip() for e in APPROVER_EMAIL.split(",") if e.strip()],
+                "subject": f"New petty cash request {ref_no}",
+                "html": (
+                    f"<p><strong>{requester}</strong> submitted a new petty cash request.</p>"
+                    f"<p>Reference: <strong>{ref_no}</strong><br>"
+                    f"Amount: <strong>₦{gross_total:,.2f}</strong></p>"
+                    f"<p><a href=\"https://gdx-petty-cash.onrender.com/login\">Log in to review it</a></p>"
+                ),
+            },
+            timeout=10,
+        )
+    except Exception:
+        pass
 
 
 # ---------------------------------------------------------------------------
@@ -190,6 +219,7 @@ def submit_request():
         """, (request_id, item["date"], item["desc"], item["amount"]))
 
     db.commit()
+    send_approver_notification(ref_no, requester, gross_total)
     return redirect(url_for("confirmation", ref_no=ref_no))
 
 
@@ -297,6 +327,6 @@ def update_status(request_id):
 
 init_db()
 
-if __name__ == "_main_":
+if _name_ == "_main_":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
