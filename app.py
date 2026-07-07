@@ -508,17 +508,27 @@ if new_status in ("Approved", "Rejected"):
 elif new_status == "Paid":
     paid_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
 
- cur.execute("""
-        UPDATE requests
-        SET status = %s, approver_name = %s, approved_on = %s
-        WHERE id = %s
-    """, (new_status, approver_name, approved_on, request_id))
-    db.commit()
-    cur.close()
+cur.execute("""
+    UPDATE requests
+    SET
+        status = %s,
+        approver_name = %s,
+        approved_on = COALESCE(%s, approved_on),
+        paid_on = COALESCE(%s, paid_on)
+    WHERE id = %s
+""", (
+    new_status,
+    approver_name,
+    approved_on,
+    paid_on,
+    request_id
+))
 
-    flash(f"Request marked as {new_status}.", "success")
-    return redirect(url_for("request_detail", request_id=request_id))
+db.commit()
+cur.close()
 
+flash(f"Request marked as {new_status}.", "success")
+return redirect(url_for("request_detail", request_id=request_id))
 
 # ---------------------------------------------------------------------------
 # Entrypoint
