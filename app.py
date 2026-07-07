@@ -283,7 +283,7 @@ def dashboard():
            SELECT * FROM requests
         WHERE status = %s
         AND archived = FALSE
-        ORDER BY created_at DESC
+        ORDER BY created_at DESC,
             (status_filter,)
         )
     else:
