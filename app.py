@@ -188,7 +188,94 @@ def archive_request(request_id):
 
     flash("Request archived.", "success")
     return redirect(url_for("dashboard"))
+    
+@app.route("/download/<int:request_id>")
+@approver_required
+def download_request(request_id):
+    db = get_db()
+    cur = db.cursor()
 
+    cur.execute("SELECT * FROM requests WHERE id = %s", (request_id,))
+    req = cur.fetchone()
+
+    cur.execute("""
+        SELECT *
+        FROM request_items
+        WHERE request_id = %s
+        ORDER BY id
+    """, (request_id,))
+    items = cur.fetchall()
+
+    cur.close()
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(buffer)
+
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("<b>GDX EQUIP</b>", styles["Title"]))
+    elements.append(Paragraph("<b>PETTY CASH REQUEST</b>", styles["Heading2"]))
+    elements.append(Spacer(1, 0.2 * inch))
+
+    elements.append(Paragraph(f"<b>Reference:</b> {req['ref_no']}", styles["Normal"]))
+    elements.append(Paragraph(f"<b>Status:</b> {req['status']}", styles["Normal"]))
+    elements.append(Paragraph(f"<b>Requester:</b> {req['requester']}", styles["Normal"]))
+    elements.append(Paragraph(f"<b>Request Date:</b> {req['request_date']}", styles["Normal"]))
+    elements.append(Spacer(1, 0.2 * inch))
+
+    data = [["Date", "Description", "Amount"]]
+
+    for item in items:
+        data.append([
+            str(item["line_date"] or ""),
+            item["description"],
+            f"₦{item['amount']:,.2f}"
+        ])
+
+    data.append([
+        "",
+        "GROSS TOTAL",
+        f"₦{req['gross_total']:,.2f}"
+    ])
+
+    table = Table(data, colWidths=[100, 260, 100])
+
+    table.setStyle(TableStyle([
+        ("GRID", (0,0), (-1,-1), 0.5, colors.black),
+        ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
+        ("BACKGROUND", (0,-1), (-1,-1), colors.beige),
+        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+        ("FONTNAME", (0,-1), (-1,-1), "Helvetica-Bold"),
+        ("ALIGN", (2,0), (2,-1), "RIGHT"),
+        ("BOTTOMPADDING", (0,0), (-1,0), 8),
+    ]))
+
+    elements.append(table)
+    elements.append(Spacer(1, 0.3 * inch))
+
+    elements.append(Paragraph(
+        f"<b>Requester Signature:</b> {req['signature_name']}",
+        styles["Normal"]
+    ))
+
+    if req["approver_name"]:
+        elements.append(Paragraph(
+            f"<b>Approved By:</b> {req['approver_name']}",
+            styles["Normal"]
+        ))
+
+    doc.build(elements)
+
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f"{req['ref_no']}.pdf",
+        mimetype="application/pdf"
+    )
 @app.route("/archived")
 @approver_required
 def archived():
