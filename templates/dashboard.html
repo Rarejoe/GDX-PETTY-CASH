@@ -39,7 +39,7 @@
         <td data-label="Requester">{{ r['requester'] }}</td>
         <td data-label="Amount" class="num">₦{{ '{:,.2f}'.format(r['gross_total']) }}</td>
         <td data-label="Status"><span class="status-badge status-{{ r['status']|lower }}">{{ r['status'] }}</span></td>
-        <td data-label="Submitted">{{ r['created_at'][:16] }}</td>
+       <td data-label="Submitted">{{ r['signed_on'] }}</td>
       </tr>
       {% else %}
       <tr><td colspan="5" class="empty">No requests yet.</td></tr>
