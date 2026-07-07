@@ -210,13 +210,13 @@ def submit_request():
             form=request.form
         )
 
-   gross_total = sum(i["amount"] for i in line_items)
-   ref_no = next_ref_no(db)
-   now = datetime.datetime.now(ZoneInfo("Africa/Lagos"))
-   signed_on = now.strftime("%d %b %Y %I:%M %p")
-   created_at = now.isoformat()
+    gross_total = sum(i["amount"] for i in line_items)
+    ref_no = next_ref_no(db)
+    now = datetime.datetime.now(ZoneInfo("Africa/Lagos"))
+    signed_on = now.strftime("%d %b %Y %I:%M %p")
+    created_at = now.isoformat()
 
-   cur.execute("""
+    cur.execute("""
         INSERT INTO requests
             (ref_no, request_date, requester, department, purpose,
              signature_name, signature_image, signed_on, status, gross_total, created_at)
