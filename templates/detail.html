@@ -77,7 +77,16 @@
 </form>
 
 
-  <a href="{{ url_for('dashboard') }}" class="back-link">← Back to dashboard</a>
+  <div class="actions" style="margin-top:20px;">
+    <a href="{{ url_for('download_request', request_id=req['id']) }}"
+       class="primary">
+        📄 Download PDF
+    </a>
+
+    <a href="{{ url_for('dashboard') }}" class="back-link">
+        ← Back to Dashboard
+    </a>
+</div>
 </div>
 
 {% endblock %}
