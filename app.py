@@ -161,6 +161,23 @@ def new_request_form():
     ref_no = next_ref_no(db)
     today = datetime.date.today().isoformat()
     return render_template("request_form.html", ref_no=ref_no, today=today)
+    
+ @app.route("/archive/<int:request_id>", methods=["POST"])
+ @approver_required
+ def archive_request(request_id):
+    db = get_db()
+    cur = db.cursor()
+
+    cur.execute(
+        "UPDATE requests SET archived = TRUE WHERE id = %s",
+        (request_id,)
+    )
+
+    db.commit()
+    cur.close()
+
+    flash("Request archived.", "success")
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/submit", methods=["POST"])
