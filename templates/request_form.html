@@ -12,7 +12,7 @@
     </div>
   </div>
 
-  <form method="POST" action="{{ url_for('submit_request') }}" id="requestForm">
+  <form method="POST" action="{{ url_for('submit_request') }}" enctype="multipart/form-data" id="requestForm">
 
     <div class="meta-grid">
       <div class="field">
@@ -42,7 +42,7 @@
     </div>
 
     <div class="totals">
-      <div class="totals-box">
+      <div class="totals-box""
         <div class="totals-row gross">
           <span>GROSS TOTAL</span>
           <span id="grossTotal">₦0.00</span>
