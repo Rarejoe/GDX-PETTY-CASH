@@ -21,7 +21,9 @@
          class="filter-pill {{ 'active' if status_filter == s else '' }}">{{ s }}</a>
     {% endfor %}
   </div>
-
+<a href="{{ url_for('archived') }}" class="back-link">
+    View Archived Requests
+</a>
   <table class="list-table">
     <thead>
       <tr>
