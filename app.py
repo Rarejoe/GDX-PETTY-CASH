@@ -200,7 +200,7 @@ def download_request(request_id):
 
     cur.execute("""
         SELECT *
-        FROM request_items
+        FROM line_items
         WHERE request_id = %s
         ORDER BY id
     """, (request_id,))
