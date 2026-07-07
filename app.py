@@ -532,6 +532,104 @@ def update_status(request_id):
     return redirect(url_for("request_detail", request_id=request_id))
 
 # ---------------------------------------------------------------------------
+# Excel export (for auditing)
+# ---------------------------------------------------------------------------
+
+@app.route("/export")
+@approver_required
+def export_excel():
+    from io import BytesIO
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill
+
+    db = get_db()
+    cur = db.cursor()
+
+    status_filter = request.args.get("status", "All")
+    start_date = request.args.get("start_date", "").strip()
+    end_date = request.args.get("end_date", "").strip()
+
+    query = """
+        SELECT
+            r.ref_no, r.requester, r.request_date,
+            li.line_date, li.description, li.amount,
+            r.gross_total, r.status, r.signed_on,
+            r.approved_on, r.paid_on, r.approver_name
+        FROM requests r
+        JOIN line_items li ON li.request_id = r.id
+        WHERE r.archived = FALSE
+    """
+    params = []
+
+    if status_filter and status_filter != "All":
+        query += " AND r.status = %s"
+        params.append(status_filter)
+    if start_date:
+        query += " AND r.request_date >= %s"
+        params.append(start_date)
+    if end_date:
+        query += " AND r.request_date <= %s"
+        params.append(end_date)
+
+    query += " ORDER BY r.created_at DESC, li.id"
+
+    cur.execute(query, tuple(params))
+    rows = cur.fetchall()
+    cur.close()
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Petty Cash Requests"
+
+    headers = [
+        "Reference No.", "Requester", "Request Date",
+        "Expense Date", "Description", "Amount",
+        "Gross Total", "Status", "Submitted On",
+        "Approved On", "Paid On", "Approver Name",
+    ]
+    ws.append(headers)
+
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="12294D", end_color="12294D", fill_type="solid")
+    for col_num, _ in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center")
+
+    for r in rows:
+        ws.append([
+            r["ref_no"], r["requester"], r["request_date"],
+            r["line_date"], r["description"], r["amount"],
+            r["gross_total"], r["status"], r["signed_on"],
+            r["approved_on"], r["paid_on"], r["approver_name"],
+        ])
+
+    for col_cells in ws.columns:
+        length = max((len(str(c.value)) if c.value is not None else 0) for c in col_cells)
+        ws.column_dimensions[col_cells[0].column_letter].width = min(max(length + 2, 10), 40)
+
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    filename_bits = ["petty_cash_export"]
+    if status_filter != "All":
+        filename_bits.append(status_filter.lower())
+    if start_date:
+        filename_bits.append(start_date)
+    if end_date:
+        filename_bits.append(end_date)
+    filename = "_".join(filename_bits) + ".xlsx"
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+# ---------------------------------------------------------------------------
 # Entrypoint
 # ---------------------------------------------------------------------------
 
