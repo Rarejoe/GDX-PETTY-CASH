@@ -280,7 +280,10 @@ def dashboard():
 
     if status_filter and status_filter != "All":
         cur.execute(
-            "SELECT * FROM requests WHERE status = %s ORDER BY created_at DESC",
+           SELECT * FROM requests
+        WHERE status = %s
+        AND archived = FALSE
+        ORDER BY created_at DESC
             (status_filter,)
         )
     else:
