@@ -1,12 +1,15 @@
 """
-Petty Cash Request System
---------------------------
+Petty Cash Request System (Postgres / Supabase version)
+---------------------------------------------------------
 A small Flask web app that replaces paper petty cash request forms.
 
 - Anyone with the link can submit a request (multiple expense lines + drawn signature).
-- Everything is stored centrally in a SQLite database (petty_cash.db).
+- Data is stored permanently in a Postgres database (Supabase free tier).
+- Approver gets an email notification when a new request is submitted.
 - A dashboard lists all requests and lets an approver mark them Approved / Rejected / Paid.
 - Approver actions are protected by a single shared password (set via APPROVER_PASSWORD).
+
+Requires the DATABASE_URL environment variable (your Supabase connection string).
 
 Run locally:
     pip install -r requirements.txt
@@ -15,17 +18,18 @@ Then open http://127.0.0.1:5000 in your browser.
 """
 
 import os
-import sqlite3
 import datetime
 from functools import wraps
 
+import psycopg2
+import psycopg2.extras
 import requests
 from flask import (
     Flask, render_template, request, redirect,
     url_for, session, flash, g
 )
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "petty_cash.db")
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
@@ -68,8 +72,7 @@ def send_approver_notification(ref_no, requester, gross_total):
 
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect(DB_PATH)
-        g.db.row_factory = sqlite3.Row
+        g.db = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
     return g.db
 
 
@@ -81,16 +84,18 @@ def close_db(exception=None):
 
 
 def init_db():
-    db = sqlite3.connect(DB_PATH)
-    db.executescript("""
+    db = psycopg2.connect(DATABASE_URL)
+    cur = db.cursor()
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS requests (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             ref_no TEXT UNIQUE NOT NULL,
             request_date TEXT NOT NULL,
             requester TEXT NOT NULL,
             department TEXT,
             purpose TEXT,
             signature_name TEXT NOT NULL,
+            signature_image TEXT,
             signed_on TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'Pending',
             approver_name TEXT,
@@ -98,30 +103,30 @@ def init_db():
             gross_total REAL NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL
         );
-
+    """)
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS line_items (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            request_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            request_id INTEGER NOT NULL REFERENCES requests(id),
             line_date TEXT,
             description TEXT NOT NULL,
-            amount REAL NOT NULL,
-            FOREIGN KEY (request_id) REFERENCES requests (id)
+            amount REAL NOT NULL
         );
     """)
-    # Add signature_image column if it doesn't exist yet (safe migration)
-    cols = [row[1] for row in db.execute("PRAGMA table_info(requests)").fetchall()]
-    if "signature_image" not in cols:
-        db.execute("ALTER TABLE requests ADD COLUMN signature_image TEXT")
     db.commit()
+    cur.close()
     db.close()
 
 
 def next_ref_no(db):
-    row = db.execute("""
+    cur = db.cursor()
+    cur.execute("""
         SELECT ref_no FROM requests
-        WHERE ref_no LIKE 'PCR-%'
+        WHERE ref_no LIKE 'PCR-%%'
         ORDER BY id DESC LIMIT 1
-    """).fetchone()
+    """)
+    row = cur.fetchone()
+    cur.close()
     if row is None:
         return "PCR-0001"
     last_num = int(row["ref_no"].split("-")[1])
@@ -157,6 +162,7 @@ def new_request_form():
 @app.route("/submit", methods=["POST"])
 def submit_request():
     db = get_db()
+    cur = db.cursor()
 
     requester = request.form.get("requester", "").strip()
     request_date = request.form.get("request_date", "").strip()
@@ -205,22 +211,24 @@ def submit_request():
     signed_on = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     created_at = datetime.datetime.now().isoformat()
 
-    cur = db.execute("""
+    cur.execute("""
         INSERT INTO requests
             (ref_no, request_date, requester, department, purpose,
              signature_name, signature_image, signed_on, status, gross_total, created_at)
-        VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, 'Pending', ?, ?)
+        VALUES (%s, %s, %s, NULL, NULL, %s, %s, %s, 'Pending', %s, %s)
+        RETURNING id
     """, (ref_no, request_date, requester,
           signature_name, signature_image, signed_on, gross_total, created_at))
-    request_id = cur.lastrowid
+    request_id = cur.fetchone()["id"]
 
     for item in line_items:
-        db.execute("""
+        cur.execute("""
             INSERT INTO line_items (request_id, line_date, description, amount)
-            VALUES (?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s)
         """, (request_id, item["date"], item["desc"], item["amount"]))
 
     db.commit()
+    cur.close()
     send_approver_notification(ref_no, requester, gross_total)
     return redirect(url_for("confirmation", ref_no=ref_no))
 
@@ -262,22 +270,24 @@ def logout():
 @approver_required
 def dashboard():
     db = get_db()
+    cur = db.cursor()
     status_filter = request.args.get("status", "All")
 
     if status_filter and status_filter != "All":
-        rows = db.execute(
-            "SELECT * FROM requests WHERE status = ? ORDER BY created_at DESC",
+        cur.execute(
+            "SELECT * FROM requests WHERE status = %s ORDER BY created_at DESC",
             (status_filter,)
-        ).fetchall()
+        )
     else:
-        rows = db.execute(
-            "SELECT * FROM requests ORDER BY created_at DESC"
-        ).fetchall()
+        cur.execute("SELECT * FROM requests ORDER BY created_at DESC")
+    rows = cur.fetchall()
 
-    totals = db.execute("""
+    cur.execute("""
         SELECT status, COUNT(*) as count, COALESCE(SUM(gross_total), 0) as total
         FROM requests GROUP BY status
-    """).fetchall()
+    """)
+    totals = cur.fetchall()
+    cur.close()
 
     return render_template("dashboard.html", requests=rows, totals=totals,
                             status_filter=status_filter)
@@ -287,14 +297,19 @@ def dashboard():
 @approver_required
 def request_detail(request_id):
     db = get_db()
-    req = db.execute("SELECT * FROM requests WHERE id = ?", (request_id,)).fetchone()
+    cur = db.cursor()
+    cur.execute("SELECT * FROM requests WHERE id = %s", (request_id,))
+    req = cur.fetchone()
     if req is None:
         flash("Request not found.", "error")
+        cur.close()
         return redirect(url_for("dashboard"))
-    items = db.execute(
-        "SELECT * FROM line_items WHERE request_id = ? ORDER BY id",
+    cur.execute(
+        "SELECT * FROM line_items WHERE request_id = %s ORDER BY id",
         (request_id,)
-    ).fetchall()
+    )
+    items = cur.fetchall()
+    cur.close()
     return render_template("detail.html", req=req, items=items)
 
 
@@ -302,22 +317,25 @@ def request_detail(request_id):
 @approver_required
 def update_status(request_id):
     db = get_db()
+    cur = db.cursor()
     new_status = request.form.get("status")
     approver_name = request.form.get("approver_name", "").strip()
 
     if new_status not in ("Pending", "Approved", "Rejected", "Paid"):
         flash("Invalid status.", "error")
+        cur.close()
         return redirect(url_for("request_detail", request_id=request_id))
 
     approved_on = datetime.datetime.now().strftime("%Y-%m-%d %H:%M") \
         if new_status in ("Approved", "Rejected", "Paid") else None
 
-    db.execute("""
+    cur.execute("""
         UPDATE requests
-        SET status = ?, approver_name = ?, approved_on = ?
-        WHERE id = ?
+        SET status = %s, approver_name = %s, approved_on = %s
+        WHERE id = %s
     """, (new_status, approver_name, approved_on, request_id))
     db.commit()
+    cur.close()
 
     flash(f"Request marked as {new_status}.", "success")
     return redirect(url_for("request_detail", request_id=request_id))
@@ -329,6 +347,6 @@ def update_status(request_id):
 
 init_db()
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
