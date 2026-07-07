@@ -499,8 +499,14 @@ def update_status(request_id):
         cur.close()
         return redirect(url_for("request_detail", request_id=request_id))
 
-    approved_on = datetime.datetime.now().strftime("%Y-%m-%d %H:%M") \
-        if new_status in ("Approved", "Rejected", "Paid") else None
+   approved_on = None
+paid_on = None
+
+if new_status in ("Approved", "Rejected"):
+    approved_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
+
+elif new_status == "Paid":
+    paid_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
 
     cur.execute("""
         UPDATE requests
