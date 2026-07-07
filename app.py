@@ -27,7 +27,7 @@ from flask import (
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "petty_cash.db")
 
-app = Flask(_name_)
+app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 APPROVER_PASSWORD = os.environ.get("APPROVER_PASSWORD", "changeme123")
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
@@ -329,6 +329,6 @@ def update_status(request_id):
 
 init_db()
 
-if _name_ == "_main_":
+if __name__ == "_main_":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
