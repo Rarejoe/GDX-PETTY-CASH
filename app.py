@@ -197,6 +197,23 @@ def archived():
 
     return render_template("archived.html", requests=rows)
     
+@app.route("/restore/<int:request_id>", methods=["POST"])
+@approver_required
+def restore_request(request_id):
+    db = get_db()
+    cur = db.cursor()
+
+    cur.execute(
+        "UPDATE requests SET archived = FALSE WHERE id = %s",
+        (request_id,)
+    )
+
+    db.commit()
+    cur.close()
+
+    flash("Request restored.", "success")
+    return redirect(url_for("archived"))    
+    
 @app.route("/submit", methods=["POST"])
 def submit_request():
     db = get_db()
