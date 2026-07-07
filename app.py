@@ -212,9 +212,7 @@ def submit_request():
 
    gross_total = sum(i["amount"] for i in line_items)
    ref_no = next_ref_no(db)
-
    now = datetime.datetime.now(ZoneInfo("Africa/Lagos"))
-
    signed_on = now.strftime("%d %b %Y %I:%M %p")
    created_at = now.isoformat()
 
