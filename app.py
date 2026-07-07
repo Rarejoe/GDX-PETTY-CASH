@@ -22,6 +22,16 @@ import datetime
 from zoneinfo import ZoneInfo
 from functools import wraps
 
+from io import BytesIO
+from flask import send_file
+from reportlab.platypus import (
+    SimpleDocTemplate, Table, TableStyle,
+    Paragraph, Spacer
+)
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+
 import psycopg
 from psycopg.rows import dict_row
 import requests
