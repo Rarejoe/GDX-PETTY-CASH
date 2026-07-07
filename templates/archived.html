@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Archived Requests{% endblock %}
+{% block content %}
+
+<div class="sheet wide">
+    <h1>Archived Requests</h1>
+
+    <table class="list-table">
+        <thead>
+            <tr>
+                <th>Ref No.</th>
+                <th>Requester</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for r in requests %}
+            <tr>
+                <td>{{ r['ref_no'] }}</td>
+                <td>{{ r['requester'] }}</td>
+                <td>₦{{ "{:,.2f}".format(r['gross_total']) }}</td>
+                <td>{{ r['status'] }}</td>
+                <td>
+                    <form action="{{ url_for('restore_request', request_id=r['id']) }}" method="POST">
+                        <button type="submit" class="primary">
+                            Restore
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5">No archived requests.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('dashboard') }}" class="back-link">
+        ← Back to Dashboard
+    </a>
+
+</div>
+
+{% endblock %}
