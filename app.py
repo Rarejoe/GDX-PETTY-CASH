@@ -491,6 +491,7 @@ def request_detail(request_id):
 def update_status(request_id):
     db = get_db()
     cur = db.cursor()
+
     new_status = request.form.get("status")
     approver_name = request.form.get("approver_name", "").strip()
 
@@ -499,36 +500,36 @@ def update_status(request_id):
         cur.close()
         return redirect(url_for("request_detail", request_id=request_id))
 
-approved_on = None
-paid_on = None
+    approved_on = None
+    paid_on = None
 
-if new_status in ("Approved", "Rejected"):
-    approved_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
+    if new_status in ("Approved", "Rejected"):
+        approved_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
 
-elif new_status == "Paid":
-    paid_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
+    elif new_status == "Paid":
+        paid_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
 
-cur.execute("""
-    UPDATE requests
-    SET
-        status = %s,
-        approver_name = %s,
-        approved_on = COALESCE(%s, approved_on),
-        paid_on = COALESCE(%s, paid_on)
-    WHERE id = %s
-""", (
-    new_status,
-    approver_name,
-    approved_on,
-    paid_on,
-    request_id
-))
+    cur.execute("""
+        UPDATE requests
+        SET
+            status = %s,
+            approver_name = %s,
+            approved_on = COALESCE(%s, approved_on),
+            paid_on = COALESCE(%s, paid_on)
+        WHERE id = %s
+    """, (
+        new_status,
+        approver_name,
+        approved_on,
+        paid_on,
+        request_id
+    ))
 
-db.commit()
-cur.close()
+    db.commit()
+    cur.close()
 
-flash(f"Request marked as {new_status}.", "success")
-return redirect(url_for("request_detail", request_id=request_id))
+    flash(f"Request marked as {new_status}.", "success")
+    return redirect(url_for("request_detail", request_id=request_id))
 
 # ---------------------------------------------------------------------------
 # Entrypoint
