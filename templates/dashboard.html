@@ -21,6 +21,29 @@
          class="filter-pill {{ 'active' if status_filter == s else '' }}">{{ s }}</a>
     {% endfor %}
   </div>
+  <div class="export-row" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; padding:14px 0; border-top:1px solid var(--line); margin-top:10px;">
+  <form method="GET" action="{{ url_for('export_excel') }}" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+    <div class="field">
+      <label>From</label>
+      <input type="date" name="start_date">
+    </div>
+    <div class="field">
+      <label>To</label>
+      <input type="date" name="end_date">
+    </div>
+    <div class="field">
+      <label>Status</label>
+      <select name="status" style="border:none; border-bottom:1.5px solid var(--line); background:transparent; font-family:inherit; font-size:14px; padding:6px 2px; color:var(--ink);">
+        <option value="All">All</option>
+        <option value="Pending">Pending</option>
+        <option value="Approved">Approved</option>
+        <option value="Rejected">Rejected</option>
+        <option value="Paid">Paid</option>
+      </select>
+    </div>
+    <button type="submit" class="secondary" style="width:auto;">Download Excel</button>
+  </form>
+</div>
 <a href="{{ url_for('archived') }}" class="back-link">
     View Archived Requests
 </a>
