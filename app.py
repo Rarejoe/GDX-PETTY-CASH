@@ -16,7 +16,8 @@ Run locally:
     python app.py
 Then open http://127.0.0.1:5000 in your browser.
 """
-
+from supabase import create_client
+import uuid
 import os
 import datetime
 from zoneinfo import ZoneInfo
@@ -43,6 +44,13 @@ from flask import (
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 app = Flask(__name__)
+SUPABASE_URL = "YOUR_PROJECT_URL"
+SUPABASE_KEY = "YOUR_SERVICE_ROLE_KEY"
+
+supabase = create_client(
+    SUPABASE_URL,
+    SUPABASE_KEY
+)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 APPROVER_PASSWORD = os.environ.get("APPROVER_PASSWORD", "changeme123")
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
