@@ -179,7 +179,24 @@ def archive_request(request_id):
     flash("Request archived.", "success")
     return redirect(url_for("dashboard"))
 
+@app.route("/archived")
+@approver_required
+def archived():
+    db = get_db()
+    cur = db.cursor()
 
+    cur.execute("""
+        SELECT *
+        FROM requests
+        WHERE archived = TRUE
+        ORDER BY created_at DESC
+    """)
+
+    rows = cur.fetchall()
+    cur.close()
+
+    return render_template("archived.html", requests=rows)
+    
 @app.route("/submit", methods=["POST"])
 def submit_request():
     db = get_db()
