@@ -120,6 +120,7 @@ def init_db():
             purpose TEXT,
             signature_name TEXT NOT NULL,
             signature_image TEXT,
+            receipt_url TEXT,
             signed_on TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'Pending',
             approver_name TEXT,
