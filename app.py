@@ -375,7 +375,7 @@ def submit_request():
     now = datetime.datetime.now(ZoneInfo("Africa/Lagos"))
     signed_on = now.strftime("%d %b %Y %I:%M %p")
     created_at = now.isoformat()
-if receipt and receipt.filename:
+    if receipt and receipt.filename:
 
     file_ext = receipt.filename.rsplit(".", 1)[-1].lower()
 
