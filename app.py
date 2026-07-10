@@ -331,31 +331,44 @@ def submit_request():
     request_date = request.form.get("request_date", "").strip()
     signature_name = request.form.get("signature_name", "").strip()
     signature_image = request.form.get("signature_image", "").strip()
+
     receipt = request.files.get("receipt")
     receipt_url = None
+
     line_dates = request.form.getlist("line_date[]")
     line_descs = request.form.getlist("line_desc[]")
     line_amounts = request.form.getlist("line_amount[]")
 
     errors = []
+
     if not requester:
         errors.append("Requester's name is required.")
+
     if not signature_name:
         errors.append("Your name is required to confirm the request.")
+
     if not signature_image:
         errors.append("Please sign the request before submitting.")
 
     line_items = []
+
     for d, desc, amt in zip(line_dates, line_descs, line_amounts):
         desc = desc.strip()
+
         if not desc and not amt.strip():
             continue
+
         try:
             amount = float(amt)
         except ValueError:
             amount = 0.0
+
         if desc and amount > 0:
-            line_items.append({"date": d.strip(), "desc": desc, "amount": amount})
+            line_items.append({
+                "date": d.strip(),
+                "desc": desc,
+                "amount": amount
+            })
 
     if not line_items:
         errors.append("Please add at least one valid expense line (description + amount).")
@@ -363,24 +376,26 @@ def submit_request():
     if errors:
         for e in errors:
             flash(e, "error")
+
         ref_no = next_ref_no(db)
         today = datetime.date.today().isoformat()
+
         return render_template(
-            "request_form.html", ref_no=ref_no, today=today,
+            "request_form.html",
+            ref_no=ref_no,
+            today=today,
             form=request.form
         )
 
- gross_total = sum(i["amount"] for i in line_items)
-ref_no = next_ref_no(db)
-now = datetime.datetime.now(ZoneInfo("Africa/Lagos"))
-signed_on = now.strftime("%d %b %Y %I:%M %p")
-created_at = now.isoformat()
+    gross_total = sum(i["amount"] for i in line_items)
+    ref_no = next_ref_no(db)
+    now = datetime.datetime.now(ZoneInfo("Africa/Lagos"))
+    signed_on = now.strftime("%d %b %Y %I:%M %p")
+    created_at = now.isoformat()
 
-if receipt and receipt.filename:
+    if receipt and receipt.filename:
         file_ext = receipt.filename.rsplit(".", 1)[-1].lower()
-
         filename = f"{uuid.uuid4()}.{file_ext}"
-
         file_path = f"{ref_no}/{filename}"
 
         supabase.storage.from_("receipts").upload(
@@ -394,22 +409,41 @@ if receipt and receipt.filename:
     cur.execute("""
         INSERT INTO requests
             (ref_no, request_date, requester, department, purpose,
-             signature_name, signature_image, signed_on, status, gross_total, created_at)
-        VALUES (%s, %s, %s, NULL, NULL, %s, %s, %s, 'Pending', %s, %s)
+             signature_name, signature_image, signed_on,
+             status, gross_total, created_at)
+        VALUES (%s, %s, %s, NULL, NULL, %s, %s, %s,
+                'Pending', %s, %s)
         RETURNING id
-    """, (ref_no, request_date, requester,
-          signature_name, signature_image, signed_on, gross_total, created_at))
+    """, (
+        ref_no,
+        request_date,
+        requester,
+        signature_name,
+        signature_image,
+        signed_on,
+        gross_total,
+        created_at
+    ))
+
     request_id = cur.fetchone()["id"]
 
     for item in line_items:
         cur.execute("""
-            INSERT INTO line_items (request_id, line_date, description, amount)
+            INSERT INTO line_items
+            (request_id, line_date, description, amount)
             VALUES (%s, %s, %s, %s)
-        """, (request_id, item["date"], item["desc"], item["amount"]))
+        """, (
+            request_id,
+            item["date"],
+            item["desc"],
+            item["amount"]
+        ))
 
     db.commit()
     cur.close()
+
     send_approver_notification(ref_no, requester, gross_total)
+
     return redirect(url_for("confirmation", ref_no=ref_no))
 
 
