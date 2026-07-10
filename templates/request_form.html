@@ -50,7 +50,7 @@
       </div>
     </div>
 
-    <div class="signoff single">
+    <div class="signoff">
       <div class="sig-block sig-pad-wrap">
         <label>Sign here *</label>
         <canvas class="sig-pad" id="sigPad"></canvas>
@@ -60,6 +60,18 @@
         </div>
         <input type="hidden" name="signature_name" id="signatureName">
         <input type="hidden" name="signature_image" id="signatureImage">
+        <div class="sig-block">
+    <label>Receipt (Optional)</label>
+
+    <input
+        type="file"
+        name="receipt"
+        accept=".pdf,.jpg,.jpeg,.png">
+
+    <small style="display:block;margin-top:8px;color:#777;">
+        Upload a PDF, JPG or PNG receipt if available.
+    </small>
+</div>
       </div>
     </div>
 
