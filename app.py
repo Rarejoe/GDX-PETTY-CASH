@@ -409,9 +409,9 @@ def submit_request():
     cur.execute("""
         INSERT INTO requests
             (ref_no, request_date, requester, department, purpose,
-             signature_name, signature_image, signed_on,
+             signature_name, signature_image, receipt_url, signed_on,
              status, gross_total, created_at)
-        VALUES (%s, %s, %s, NULL, NULL, %s, %s, %s,
+        VALUES (%s, %s, %s, NULL, NULL, %s, %s, %s, %s,
                 'Pending', %s, %s)
         RETURNING id
     """, (
@@ -420,6 +420,7 @@ def submit_request():
         requester,
         signature_name,
         signature_image,
+        receipt_url,
         signed_on,
         gross_total,
         created_at
