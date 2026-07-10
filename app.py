@@ -377,19 +377,20 @@ signed_on = now.strftime("%d %b %Y %I:%M %p")
 created_at = now.isoformat()
 
 if receipt and receipt.filename:
-    file_ext = receipt.filename.rsplit(".", 1)[-1].lower()
+        file_ext = receipt.filename.rsplit(".", 1)[-1].lower()
 
-    filename = f"{uuid.uuid4()}.{file_ext}"
+        filename = f"{uuid.uuid4()}.{file_ext}"
 
-    file_path = f"{ref_no}/{filename}"
+        file_path = f"{ref_no}/{filename}"
 
-    supabase.storage.from_("receipts").upload(
-        file_path,
-        receipt.read(),
-        {"content-type": receipt.content_type}
-    )
+        supabase.storage.from_("receipts").upload(
+            file_path,
+            receipt.read(),
+            {"content-type": receipt.content_type}
+        )
 
-    receipt_url = file_path
+        receipt_url = file_path
+
     cur.execute("""
         INSERT INTO requests
             (ref_no, request_date, requester, department, purpose,
