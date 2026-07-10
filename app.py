@@ -370,13 +370,13 @@ def submit_request():
             form=request.form
         )
 
-    gross_total = sum(i["amount"] for i in line_items)
-    ref_no = next_ref_no(db)
-    now = datetime.datetime.now(ZoneInfo("Africa/Lagos"))
-    signed_on = now.strftime("%d %b %Y %I:%M %p")
-    created_at = now.isoformat()
-    if receipt and receipt.filename:
+ gross_total = sum(i["amount"] for i in line_items)
+ref_no = next_ref_no(db)
+now = datetime.datetime.now(ZoneInfo("Africa/Lagos"))
+signed_on = now.strftime("%d %b %Y %I:%M %p")
+created_at = now.isoformat()
 
+if receipt and receipt.filename:
     file_ext = receipt.filename.rsplit(".", 1)[-1].lower()
 
     filename = f"{uuid.uuid4()}.{file_ext}"
