@@ -331,7 +331,8 @@ def submit_request():
     request_date = request.form.get("request_date", "").strip()
     signature_name = request.form.get("signature_name", "").strip()
     signature_image = request.form.get("signature_image", "").strip()
-
+    receipt = request.files.get("receipt")
+    receipt_url = None
     line_dates = request.form.getlist("line_date[]")
     line_descs = request.form.getlist("line_desc[]")
     line_amounts = request.form.getlist("line_amount[]")
