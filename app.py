@@ -405,6 +405,7 @@ def submit_request():
         )
 
         receipt_url = file_path
+        print("Receipt uploaded.URL:", receipt_url)
 
     cur.execute("""
         INSERT INTO requests
