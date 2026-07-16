@@ -423,8 +423,7 @@ def submit_request():
         receipt_url,
         signed_on,
         gross_total,
-        created_at,
-        receipt_url
+        created_at
     ))
 
     request_id = cur.fetchone()["id"]
