@@ -398,7 +398,7 @@ def submit_request():
         filename = f"{uuid.uuid4()}.{file_ext}"
         file_path = f"{ref_no}/{filename}"
 
-       supabase.storage.from_("receipts").upload(
+        supabase.storage.from_("receipts").upload(
             file_path,
             receipt.read(),
             {"content-type": receipt.content_type}
