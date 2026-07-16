@@ -400,8 +400,7 @@ def submit_request():
 
         supabase.storage.from_("receipts").upload(
             file_path,
-            receipt.read(),
-            {"content-type": receipt.content_type}
+            receipt.read()
         )
 
         receipt_url = file_path
