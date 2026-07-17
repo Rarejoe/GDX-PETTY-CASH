@@ -49,6 +49,18 @@
         <div class="value signature">{{ req['signature_name'] }}</div>
       {% endif %}
       <div class="sig-date">{{ req['signature_name'] }} — signed {{ req['signed_on'] }}</div>
+      
+      {% if req['receipt_url'] %}
+<div class="field" style="margin-top:20px;">
+    <label>Receipt</label>
+    <p>
+        <a href="{{ req['receipt_url'] }}" target="_blank" class="primary">
+            📎 View Receipt
+        </a>
+    </p>
+</div>
+{% endif %}
+      
     </div>
     {% if req['approver_name'] %}
     <div class="sig-block">
