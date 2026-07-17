@@ -392,31 +392,33 @@ def submit_request():
     now = datetime.datetime.now(ZoneInfo("Africa/Lagos"))
     signed_on = now.strftime("%d %b %Y %I:%M %p")
     created_at = now.isoformat()
-if receipt and receipt.filename:
-    try:
-        file_ext = receipt.filename.rsplit(".", 1)[-1].lower()
-        filename = f"{uuid.uuid4()}.{file_ext}"
-        file_path = f"{ref_no}/{filename}"
 
-        result = supabase.storage.from_("receipts").upload(
-            file_path,
-            receipt.read(),
-            {"content-type": receipt.content_type}
-        )
+    if receipt and receipt.filename:
+        try:
+            file_ext = receipt.filename.rsplit(".", 1)[-1].lower()
+            filename = f"{uuid.uuid4()}.{file_ext}"
+            file_path = f"{ref_no}/{filename}"
 
-        print("UPLOAD SUCCESS:", result)
-        receipt_url = file_path
+            result = supabase.storage.from_("receipts").upload(
+                file_path,
+                receipt.read(),
+                {"content-type": receipt.content_type}
+            )
 
-    except Exception as e:
-        print("UPLOAD FAILED:", str(e))
-        raise
+            print("UPLOAD SUCCESS:", result)
+            receipt_url = file_path
+
+        except Exception as e:
+            print("UPLOAD FAILED:", str(e))
+            raise
+
     cur.execute("""
         INSERT INTO requests
             (ref_no, request_date, requester, department, purpose,
              signature_name, signature_image, receipt_url, signed_on,
              status, gross_total, created_at)
         VALUES (%s, %s, %s, NULL, NULL, %s, %s, %s, %s,
-               'Pending', %s, %s)
+                'Pending', %s, %s)
         RETURNING id
     """, (
         ref_no,
@@ -450,7 +452,6 @@ if receipt and receipt.filename:
     send_approver_notification(ref_no, requester, gross_total)
 
     return redirect(url_for("confirmation", ref_no=ref_no))
-
 
 @app.route("/confirmation/<ref_no>")
 def confirmation(ref_no):
