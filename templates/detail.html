@@ -62,13 +62,23 @@
 {% endif %}
       
     </div>
-    {% if req['approver_name'] %}
-    <div class="sig-block">
-      <label>Actioned by</label>
-      <div class="value signature">{{ req['approver_name'] }}</div>
-      <div class="sig-date">{{ req['status'] }} on {{ req['approved_on'] }}</div>
-    </div>
-    {% endif %}
+  {% if req['approver_name'] %}
+<div class="sig-block">
+  <label>Actioned by</label>
+
+  {% if req['approver_signature'] %}
+    <img src="{{ req['approver_signature'] }}"
+         alt="Approver Signature"
+         style="max-width:260px; border-bottom:1.5px solid var(--line); padding-bottom:4px;">
+  {% else %}
+    <div class="value signature">{{ req['approver_name'] }}</div>
+  {% endif %}
+
+  <div class="sig-date">
+    {{ req['status'] }} on {{ req['approved_on'] }}
+  </div>
+</div>
+{% endif %}
   </div>
 
 <form method="POST" action="{{ url_for('update_status', request_id=req['id']) }}" class="approve-form">
