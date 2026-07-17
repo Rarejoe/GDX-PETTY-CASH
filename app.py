@@ -406,7 +406,7 @@ def submit_request():
             )
 
             print("UPLOAD SUCCESS:", result)
-            receipt_url = file_path
+            receipt_url = supabase.storage.from_("receipts") .get_public_url(file_path)
 
         except Exception as e:
             print("UPLOAD FAILED:", repr(e))
