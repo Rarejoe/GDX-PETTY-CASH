@@ -81,9 +81,6 @@
 {% endif %}
   </div>
 
-{% if req['status'] == 'Pending' %}
-
-{% if req['status'] == 'Pending' %}
 {% if req['status'] == 'Pending' or req['status'] == 'Approved' %}
 
 <form method="POST"
@@ -139,6 +136,7 @@
             Reject
         </button>
     </div>
+
 
     {% elif req['status'] == 'Approved' %}
 
