@@ -81,6 +81,8 @@
 {% endif %}
   </div>
 
+{% if req['status'] == 'Pending' %}
+
 <form method="POST" action="{{ url_for('update_status', request_id=req['id']) }}" class="approve-form">
 
     <div class="field">
@@ -115,9 +117,7 @@
                placeholder="Enter approval password">
     </div>
 
- <div class="actions">
-
-    {% if req['status'] == 'Pending' %}
+    <div class="actions">
         <button type="submit" name="status" value="Approved" class="primary">
             Approve
         </button>
@@ -125,13 +125,11 @@
         <button type="submit" name="status" value="Rejected" class="danger">
             Reject
         </button>
-    {% endif %}
+    </div>
 
-    {% if req['status'] == 'Approved' %}
-        <button type="submit" name="status" value="Paid" class="secondary">
-            Mark Paid
-        </button>
-    {% endif %}
+</form>
+
+{% endif %}
 
 </div>
 
