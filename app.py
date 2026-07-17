@@ -416,7 +416,7 @@ except Exception as e:
              signature_name, signature_image, receipt_url, signed_on,
              status, gross_total, created_at)
         VALUES (%s, %s, %s, NULL, NULL, %s, %s, %s, %s,
-                'Pending', %s, %s)
+               'Pending', %s, %s)
         RETURNING id
     """, (
         ref_no,
