@@ -561,6 +561,7 @@ def update_status(request_id):
 
     new_status = request.form.get("status")
     approver_name = request.form.get("approver_name", "").strip()
+    approver_signature = request.form.get("approver_signature", "").strip()
 
     if new_status not in ("Pending", "Approved", "Rejected", "Paid"):
         flash("Invalid status.", "error")
@@ -581,12 +582,14 @@ def update_status(request_id):
         SET
             status = %s,
             approver_name = %s,
+            approver_signature = %s,
             approved_on = COALESCE(%s, approved_on),
             paid_on = COALESCE(%s, paid_on)
         WHERE id = %s
     """, (
         new_status,
         approver_name,
+        approver_signature,
         approved_on,
         paid_on,
         request_id
