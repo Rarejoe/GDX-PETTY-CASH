@@ -409,7 +409,7 @@ def submit_request():
 
 except Exception as e:
         print("UPLOAD FAILED:", str (e))
-        raise e
+        raise 
     cur.execute("""
         INSERT INTO requests
             (ref_no, request_date, requester, department, purpose,
