@@ -392,24 +392,24 @@ def submit_request():
     now = datetime.datetime.now(ZoneInfo("Africa/Lagos"))
     signed_on = now.strftime("%d %b %Y %I:%M %p")
     created_at = now.isoformat()
-
-    if receipt and receipt.filename:
+if receipt and receipt.filename:
+    try:
         file_ext = receipt.filename.rsplit(".", 1)[-1].lower()
         filename = f"{uuid.uuid4()}.{file_ext}"
         file_path = f"{ref_no}/{filename}"
 
-        supabase.storage.from_("receipts").upload(
+        result = supabase.storage.from_("receipts").upload(
             file_path,
             receipt.read(),
-           {"content-type": receipt.content_type}
+            {"content-type": receipt.content_type}
         )
 
         print("UPLOAD SUCCESS:", result)
         receipt_url = file_path
 
-except Exception as e:
-        print("UPLOAD FAILED:", str (e))
-        raise 
+    except Exception as e:
+        print("UPLOAD FAILED:", str(e))
+        raise
     cur.execute("""
         INSERT INTO requests
             (ref_no, request_date, requester, department, purpose,
