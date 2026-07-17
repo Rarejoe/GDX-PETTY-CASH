@@ -131,5 +131,56 @@
     </a>
 </div>
 </div>
+<script>
+const canvas = document.getElementById("approver-signature-pad");
+const hiddenInput = document.getElementById("approver_signature");
+const clearBtn = document.getElementById("clear-approver-signature");
 
+const ctx = canvas.getContext("2d");
+
+canvas.width = canvas.offsetWidth;
+canvas.height = 180;
+
+let drawing = false;
+
+canvas.addEventListener("mousedown", () => {
+    drawing = true;
+});
+
+canvas.addEventListener("mouseup", () => {
+    drawing = false;
+    ctx.beginPath();
+    hiddenInput.value = canvas.toDataURL();
+});
+
+canvas.addEventListener("mousemove", draw);
+
+function draw(e) {
+    if (!drawing) return;
+
+    const rect = canvas.getBoundingClientRect();
+
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+
+    ctx.lineTo(
+        e.clientX - rect.left,
+        e.clientY - rect.top
+    );
+
+    ctx.stroke();
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        e.clientX - rect.left,
+        e.clientY - rect.top
+    );
+}
+
+clearBtn.addEventListener("click", () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    hiddenInput.value = "";
+});
+</script>
 {% endblock %}
