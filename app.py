@@ -404,9 +404,12 @@ def submit_request():
            {"content-type": receipt.content_type}
         )
 
+        print("UPLOAD SUCCESS:", result)
         receipt_url = file_path
-        print("Receipt uploaded.URL:", receipt_url)
 
+except Exception as e:
+        print("UPLOAD FAILED:", str (e))
+        raise e
     cur.execute("""
         INSERT INTO requests
             (ref_no, request_date, requester, department, purpose,
