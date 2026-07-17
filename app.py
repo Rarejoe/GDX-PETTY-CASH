@@ -409,8 +409,8 @@ def submit_request():
             receipt_url = file_path
 
         except Exception as e:
-            print("UPLOAD FAILED:", str(e))
-            raise
+            print("UPLOAD FAILED:", repr(e))
+            return f"UPLOAD FAILED:{repr(e)}", 500
 
     cur.execute("""
         INSERT INTO requests
