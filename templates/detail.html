@@ -84,7 +84,13 @@
 {% if req['status'] == 'Pending' %}
 
 {% if req['status'] == 'Pending' %}
-<form method="POST" action="{{ url_for('update_status', request_id=req['id']) }}" class="approve-form">
+{% if req['status'] == 'Pending' or req['status'] == 'Approved' %}
+
+<form method="POST"
+      action="{{ url_for('update_status', request_id=req['id']) }}"
+      class="approve-form">
+
+    {% if req['status'] == 'Pending' %}
 
     <div class="field">
         <label>Your name (approver)</label>
@@ -119,28 +125,45 @@
     </div>
 
     <div class="actions">
-        <button type="submit" name="status" value="Approved" class="primary">
+        <button type="submit"
+                name="status"
+                value="Approved"
+                class="primary">
             Approve
         </button>
 
-        <button type="submit" name="status" value="Rejected" class="danger">
+        <button type="submit"
+                name="status"
+                value="Rejected"
+                class="danger">
             Reject
         </button>
     </div>
 
-</form>
-{% endif %}
+    {% elif req['status'] == 'Approved' %}
 
-{% if req['status'] == 'Approved' %}
-<form method="POST" action="{{ url_for('update_status', request_id=req['id']) }}" class="approve-form">
+    <input type="hidden"
+           name="approver_name"
+           value="{{ req['approver_name'] }}">
+
+    <input type="hidden"
+           name="approver_signature"
+           value="{{ req['approver_signature'] }}">
+
     <div class="actions">
-        <button type="submit" name="status" value="Paid" class="secondary">
+        <button type="submit"
+                name="status"
+                value="Paid"
+                class="secondary">
             Mark Paid
         </button>
     </div>
-</form>
-{% endif %}
 
+    {% endif %}
+
+</form>
+
+{% endif %}
 
 <form action="{{ url_for('archive_request', request_id=req['id']) }}" method="POST"
       onsubmit="return confirm('Hide this request from the dashboard?');">
