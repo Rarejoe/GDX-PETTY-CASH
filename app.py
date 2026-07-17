@@ -560,17 +560,17 @@ def update_status(request_id):
     db = get_db()
     cur = db.cursor()
 
-   new_status = request.form.get("status")
-   approver_name = request.form.get("approver_name", "").strip()
+    new_status = request.form.get("status")
+    approver_name = request.form.get("approver_name", "").strip()
 
-   if new_status in ("Approved", "Rejected"):
-       approval_password = request.form.get("approval_password", "")
+    if new_status in ("Approved", "Rejected"):
+        approval_password = request.form.get("approval_password", "")
 
-       if approval_password != APPROVAL_PASSWORD:
-        flash("Incorrect approval password.", "error")
-        return redirect(url_for("request_detail", request_id=request_id))
+        if approval_password != APPROVAL_PASSWORD:
+            flash("Incorrect approval password.", "error")
+            return redirect(url_for("request_detail", request_id=request_id))
 
-approver_signature = request.form.get("approver_signature", "").strip()
+    approver_signature = request.form.get("approver_signature", "").strip()
     approver_signature = request.form.get("approver_signature", "").strip()
 
     if new_status not in ("Pending", "Approved", "Rejected", "Paid"):
