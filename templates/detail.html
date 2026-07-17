@@ -141,9 +141,6 @@
 </form>
 {% endif %}
 
-</div>
-
-</form>
 
 <form action="{{ url_for('archive_request', request_id=req['id']) }}" method="POST"
       onsubmit="return confirm('Hide this request from the dashboard?');">
