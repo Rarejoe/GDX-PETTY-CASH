@@ -181,6 +181,7 @@
 </div>
 </div>
 <script>
+<script>
 const canvas = document.getElementById("approver-signature-pad");
 const hiddenInput = document.getElementById("approver_signature");
 const clearBtn = document.getElementById("clear-approver-signature");
@@ -190,46 +191,64 @@ const ctx = canvas.getContext("2d");
 canvas.width = canvas.offsetWidth;
 canvas.height = 180;
 
+ctx.lineWidth = 2;
+ctx.lineCap = "round";
+
 let drawing = false;
 
-canvas.addEventListener("mousedown", () => {
+function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+
+    if (e.touches) {
+        return {
+            x: e.touches[0].clientX - rect.left,
+            y: e.touches[0].clientY - rect.top
+        };
+    }
+
+    return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+    };
+}
+
+function startDrawing(e) {
     drawing = true;
-});
-
-canvas.addEventListener("mouseup", () => {
-    drawing = false;
+    const pos = getPos(e);
     ctx.beginPath();
-    hiddenInput.value = canvas.toDataURL();
-});
-
-canvas.addEventListener("mousemove", draw);
+    ctx.moveTo(pos.x, pos.y);
+}
 
 function draw(e) {
     if (!drawing) return;
 
-    const rect = canvas.getBoundingClientRect();
+    e.preventDefault();
 
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
+    const pos = getPos(e);
 
-    ctx.lineTo(
-        e.clientX - rect.left,
-        e.clientY - rect.top
-    );
-
+    ctx.lineTo(pos.x, pos.y);
     ctx.stroke();
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        e.clientX - rect.left,
-        e.clientY - rect.top
-    );
 }
+
+function stopDrawing() {
+    if (!drawing) return;
+
+    drawing = false;
+    hiddenInput.value = canvas.toDataURL();
+    ctx.beginPath();
+}
+
+canvas.addEventListener("mousedown", startDrawing);
+canvas.addEventListener("mousemove", draw);
+canvas.addEventListener("mouseup", stopDrawing);
+canvas.addEventListener("mouseleave", stopDrawing);
+
+canvas.addEventListener("touchstart", startDrawing);
+canvas.addEventListener("touchmove", draw);
+canvas.addEventListener("touchend", stopDrawing);
 
 clearBtn.addEventListener("click", () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     hiddenInput.value = "";
 });
 </script>
-{% endblock %}
