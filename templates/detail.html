@@ -181,11 +181,12 @@
 </div>
 <script>
 const canvas = document.getElementById("approver-signature-pad");
-const hiddenInput = document.getElementById("approver_signature");
-const clearBtn = document.getElementById("clear-approver-signature");
 
-const ctx = canvas.getContext("2d");
+if (canvas) {
+    const hiddenInput = document.getElementById("approver_signature");
+    const clearBtn = document.getElementById("clear-approver-signature");
 
+    const ctx = canvas.getContext("2d");
 canvas.width = canvas.offsetWidth;
 canvas.height = 180;
 
@@ -249,5 +250,6 @@ clearBtn.addEventListener("click", () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     hiddenInput.value = "";
 });
+  }
 </script>
-{% endif %}
+{% endblock %}
