@@ -483,13 +483,6 @@ def logout():
     return redirect(url_for("new_request_form"))
 
 
-@app.route("/logout")
-def logout():
-    session.pop("is_approver", None)
-    flash("Logged out.", "success")
-    return redirect(url_for("new_request_form"))
-
-
 # ---------------------------------------------------------------------------
 # Dashboard (approver view)
 # ---------------------------------------------------------------------------
