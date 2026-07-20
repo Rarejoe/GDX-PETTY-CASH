@@ -625,7 +625,7 @@ def update_status(request_id):
         cur.close()
         return redirect(url_for("request_detail", request_id=request_id))
 
-   approved_on = None
+    approved_on = None
     paid_on = None
 
     if new_status in ("Approved", "Rejected"):
