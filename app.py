@@ -468,12 +468,20 @@ def login():
     if request.method == "POST":
         password = request.form.get("password", "")
 
+    @app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        password = request.form.get("password", "")
+
         if password == APPROVER_PASSWORD:
             session["is_approver"] = True
             flash("Logged in as approver.", "success")
             next_url = request.args.get("next") or url_for("dashboard")
             return redirect(next_url)
 
+        flash("Incorrect password.", "error")
+
+    return render_template("login.html")
         flash("Incorrect password.", "error")
 
     return render_template("login.html")
