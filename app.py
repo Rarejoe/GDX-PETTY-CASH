@@ -472,8 +472,15 @@ def login():
             flash("Logged in as approver.", "success")
             next_url = request.args.get("next") or url_for("dashboard")
             return redirect(next_url)
-        flash("Incorrect password.", "error")
-    return render_template("login.html")
+            flash("Incorrect password.", "error")
+            return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.pop("is_approver", None)
+    flash("Logged out.", "success")
+    return redirect(url_for("new_request_form"))
 
 
 @app.route("/logout")
