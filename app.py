@@ -58,6 +58,7 @@ APPROVER_PASSWORD = os.environ.get("APPROVER_PASSWORD", "changeme123")
 APPROVAL_PASSWORD = os.environ.get("APPROVAL_PASSWORD", "approval123")
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 APPROVER_EMAIL = os.environ.get("APPROVER_EMAIL")
+FINANCE_EMAIL = os.getenv("FINANCE_EMAIL")
 
 
 def send_approver_notification(ref_no, requester, gross_total):
