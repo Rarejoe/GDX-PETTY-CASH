@@ -619,7 +619,6 @@ def update_status(request_id):
             return redirect(url_for("request_detail", request_id=request_id))
 
     approver_signature = request.form.get("approver_signature", "").strip()
-    approver_signature = request.form.get("approver_signature", "").strip()
 
     if new_status not in ("Pending", "Approved", "Rejected", "Paid"):
         flash("Invalid status.", "error")
