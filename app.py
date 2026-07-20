@@ -468,26 +468,25 @@ def login():
     if request.method == "POST":
         password = request.form.get("password", "")
 
-       if password == APPROVER_PASSWORD:
+        if password == APPROVER_PASSWORD:
+            try:
+                db = get_db()
 
-    try:
-        db = get_db()
+                with db.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO login_logs (ip_address)
+                        VALUES (%s)
+                    """, (request.remote_addr,))
 
-        with db.cursor() as cur:
-            cur.execute("""
-                INSERT INTO login_logs (ip_address)
-                VALUES (%s)
-            """, (request.remote_addr,))
+                db.commit()
 
-        db.commit()
+            except Exception as e:
+                print("LOGIN LOG ERROR:", e)
 
-    except Exception as e:
-        print("LOGIN LOG ERROR:", e)
-
-    session["is_approver"] = True
-    flash("Logged in as approver.", "success")
-    next_url = request.args.get("next") or url_for("dashboard")
-    return redirect(next_url)
+            session["is_approver"] = True
+            flash("Logged in as approver.", "success")
+            next_url = request.args.get("next") or url_for("dashboard")
+            return redirect(next_url)
 
         flash("Incorrect password.", "error")
 
