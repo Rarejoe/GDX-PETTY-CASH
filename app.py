@@ -86,6 +86,36 @@ def send_approver_notification(ref_no, requester, gross_total):
         print(f"EMAIL RESPONSE: status={resp.status_code} body={resp.text}")
     except Exception as ex:
         print(f"EMAIL FAILED: {ex}")
+        
+
+def send_finance_notification(ref_no, requester, gross_total, request_id):
+    """Email Finance when a petty cash request is approved."""
+    if not RESEND_API_KEY or not FINANCE_EMAIL:
+        print("EMAIL SKIPPED: RESEND_API_KEY or FINANCE_EMAIL not set")
+        return
+
+    try:
+        resp = requests.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
+            json={
+                "from": "GDX Petty Cash <onboarding@resend.dev>",
+                "to": [e.strip() for e in FINANCE_EMAIL.split(",") if e.strip()],
+                "subject": f"Petty Cash Approved {ref_no}",
+                "html": (
+                    f"<p><strong>{requester}</strong>'s petty cash request has been approved.</p>"
+                    f"<p>Reference: <strong>{ref_no}</strong><br>"
+                    f"Amount: <strong>₦{gross_total:,.2f}</strong></p>"
+                    f"<p><strong>Please proceed to pay.</strong></p>"
+                    f"<p><a href=\"https://gdx-petty-cash.onrender.com/request/{request_id}\">Log in to mark as paid</a></p>"
+                ),
+            },
+            timeout=10,
+        )
+        print(f"FINANCE EMAIL RESPONSE: status={resp.status_code} body={resp.text}")
+
+    except Exception as ex:
+        print(f"FINANCE EMAIL FAILED: {ex}")
 
 
 # ---------------------------------------------------------------------------
@@ -603,7 +633,14 @@ def update_status(request_id):
 
     elif new_status == "Paid":
         paid_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
+        
+cur.execute("""
+    SELECT ref_no, requester, gross_total
+    FROM requests
+    WHERE id = %s
+""", (request_id,))
 
+req = cur.fetchone()
     cur.execute("""
         UPDATE requests
         SET
@@ -622,9 +659,17 @@ def update_status(request_id):
         request_id
     ))
 
-    db.commit()
-    cur.close()
+   db.commit()
 
+if new_status == "Approved":
+    send_finance_notification(
+        req["ref_no"],
+        req["requester"],
+        req["gross_total"],
+        request_id
+    )
+
+cur.close()
     flash(f"Request marked as {new_status}.", "success")
     return redirect(url_for("request_detail", request_id=request_id))
 
