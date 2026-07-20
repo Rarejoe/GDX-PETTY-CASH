@@ -625,7 +625,7 @@ def update_status(request_id):
         cur.close()
         return redirect(url_for("request_detail", request_id=request_id))
 
-    approved_on = None
+   approved_on = None
     paid_on = None
 
     if new_status in ("Approved", "Rejected"):
@@ -633,14 +633,15 @@ def update_status(request_id):
 
     elif new_status == "Paid":
         paid_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
-        
-cur.execute("""
-    SELECT ref_no, requester, gross_total
-    FROM requests
-    WHERE id = %s
-""", (request_id,))
 
-req = cur.fetchone()
+    cur.execute("""
+        SELECT ref_no, requester, gross_total
+        FROM requests
+        WHERE id = %s
+    """, (request_id,))
+
+    req = cur.fetchone()
+
     cur.execute("""
         UPDATE requests
         SET
@@ -659,17 +660,18 @@ req = cur.fetchone()
         request_id
     ))
 
-   db.commit()
+    db.commit()
 
-if new_status == "Approved":
-    send_finance_notification(
-        req["ref_no"],
-        req["requester"],
-        req["gross_total"],
-        request_id
-    )
+    if new_status == "Approved":
+        send_finance_notification(
+            req["ref_no"],
+            req["requester"],
+            req["gross_total"],
+            request_id
+        )
 
-cur.close()
+    cur.close()
+
     flash(f"Request marked as {new_status}.", "success")
     return redirect(url_for("request_detail", request_id=request_id))
 
