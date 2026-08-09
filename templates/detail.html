@@ -8,17 +8,29 @@
       <h1>{{ req['ref_no'] }}</h1>
       <div class="sub">Submitted {{ req['created_at'][:16] }}</div>
     </div>
-    <span class="status-badge status-{{ req['status']|lower }} large">{{ req['status'] }}</span>
+    <span class="status-badge status-{{ req['status']|lower }} large">
+      {{ req['status'] }}
+    </span>
   </div>
 
   <div class="meta-grid readonly">
-    <div class="field"><label>Requested by</label><div class="value">{{ req['requester'] }}</div></div>
-    <div class="field"><label>Request date</label><div class="value">{{ req['request_date'] or '—' }}</div></div>
+    <div class="field">
+      <label>Requested by</label>
+      <div class="value">{{ req['requester'] }}</div>
+    </div>
+    <div class="field">
+      <label>Request date</label>
+      <div class="value">{{ req['request_date'] or '—' }}</div>
+    </div>
   </div>
 
   <table>
     <thead>
-      <tr><th>Date</th><th>Description</th><th class="num">Amount</th></tr>
+      <tr>
+        <th>Date</th>
+        <th>Description</th>
+        <th class="num">Amount</th>
+      </tr>
     </thead>
     <tbody>
       {% for item in items %}
@@ -41,215 +53,345 @@
   </div>
 
   <div class="signoff single readonly">
+
     <div class="sig-block">
       <label>Requester's signature</label>
+
       {% if req['signature_image'] %}
-        <img src="{{ req['signature_image'] }}" alt="Signature" style="max-width:260px; border-bottom:1.5px solid var(--line); padding-bottom:4px;">
+        <img src="{{ req['signature_image'] }}"
+             alt="Requester signature"
+             style="max-width:260px; border-bottom:1.5px solid var(--line); padding-bottom:4px;">
       {% else %}
         <div class="value signature">{{ req['signature_name'] }}</div>
       {% endif %}
-      <div class="sig-date">{{ req['signature_name'] }} — signed {{ req['signed_on'] }}</div>
-      
+
+      <div class="sig-date">
+        {{ req['signature_name'] }} — signed {{ req['signed_on'] }}
+      </div>
+
       {% if req['receipt_url'] %}
-<div class="field" style="margin-top:20px;">
-    <label>Receipt</label>
-    <p>
-        <a href="{{ req['receipt_url'] }}" target="_blank" class="primary">
+      <div class="field" style="margin-top:20px;">
+        <label>Receipt</label>
+        <p>
+          <a href="{{ req['receipt_url'] }}" target="_blank" class="primary">
             📎 View Receipt
-        </a>
-    </p>
-</div>
-{% endif %}
-      
-    </div>
-  {% if req['approver_name'] %}
-<div class="sig-block">
-  <label>Actioned by</label>
-
-  {% if req['approver_signature'] %}
-    <img src="{{ req['approver_signature'] }}"
-         alt="Approver Signature"
-         style="max-width:260px; border-bottom:1.5px solid var(--line); padding-bottom:4px;">
-  {% else %}
-    <div class="value signature">{{ req['approver_name'] }}</div>
-  {% endif %}
-
-  <div class="sig-date">
-    {{ req['status'] }} on {{ req['approved_on'] }}
-  </div>
-</div>
-{% endif %}
-  </div>
-
-{% if req['status'] == 'Pending' or req['status'] == 'Approved' %}
-
-<form method="POST"
-      action="{{ url_for('update_status', request_id=req['id']) }}"
-      class="approve-form">
-
-    {% if req['status'] == 'Pending' %}
-
-    <div class="field">
-        <label>Your name (approver)</label>
-        <input type="text"
-               name="approver_name"
-               required
-               value="{{ req['approver_name'] or '' }}">
+          </a>
+        </p>
+      </div>
+      {% endif %}
     </div>
 
-    <div class="field">
-        <label>Approver Signature</label>
+    {% if req['approver_name'] %}
+    <div class="sig-block">
+      <label>Actioned by</label>
 
-        <canvas id="approver-signature-pad"
-                style="border:1px solid #ccc; width:100%; height:180px;"></canvas>
+      {% if req['approver_signature'] %}
+        <img src="{{ req['approver_signature'] }}"
+             alt="Approver signature"
+             style="max-width:260px; border-bottom:1.5px solid var(--line); padding-bottom:4px;">
+      {% else %}
+        <div class="value signature">{{ req['approver_name'] }}</div>
+      {% endif %}
 
-        <input type="hidden"
-               name="approver_signature"
-               id="approver_signature">
-
-        <button type="button"
-                id="clear-approver-signature"
-                class="secondary">
-            Clear Signature
-        </button>
+      <div class="sig-date">
+        {% if req['status'] == 'Paid' %}
+          Approved
+        {% else %}
+          {{ req['status'] }}
+        {% endif %}
+        on {{ req['approved_on'] }}
+      </div>
     </div>
-
-    <div class="field">
-        <label>Approval Password</label>
-        <input type="password"
-               name="approval_password"
-               placeholder="Enter approval password">
-    </div>
-
-    <div class="actions">
-        <button type="submit"
-                name="status"
-                value="Approved"
-                class="primary">
-            Approve
-        </button>
-
-        <button type="submit"
-                name="status"
-                value="Rejected"
-                class="danger">
-            Reject
-        </button>
-    </div>
-
-
-    {% elif req['status'] == 'Approved' %}
-
-    <input type="hidden"
-           name="approver_name"
-           value="{{ req['approver_name'] }}">
-
-    <input type="hidden"
-           name="approver_signature"
-           value="{{ req['approver_signature'] }}">
-
-    <div class="actions">
-        <button type="submit"
-                name="status"
-                value="Paid"
-                class="secondary">
-            Mark Paid
-        </button>
-    </div>
-
     {% endif %}
 
-</form>
+    {% if req['status'] == 'Paid' and req['paid_signature'] %}
+    <div class="sig-block" style="padding:14px 18px;">
+      <label>Paid by</label>
 
-{% endif %}
+      <img src="{{ req['paid_signature'] }}"
+           alt="Payment signature"
+           style="max-width:260px; border-bottom:1.5px solid var(--line); padding-bottom:4px;">
 
-<form action="{{ url_for('archive_request', request_id=req['id']) }}" method="POST"
-      onsubmit="return confirm('Hide this request from the dashboard?');">
+      <div class="sig-date">
+        {{ req['paid_by'] }} — paid on {{ req['paid_on'] }}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  {% if req['status'] == 'Pending' %}
+
+  <form method="POST"
+        action="{{ url_for('update_status', request_id=req['id']) }}"
+        class="approve-form">
+
+    <div class="field">
+      <label>Your name (approver)</label>
+      <input type="text"
+             name="approver_name"
+             required
+             value="{{ req['approver_name'] or '' }}">
+    </div>
+
+    <div class="field">
+      <label>Approver Signature</label>
+
+      <canvas id="approver-signature-pad"
+              style="border:1px solid #ccc; width:100%; height:180px;"></canvas>
+
+      <input type="hidden"
+             name="approver_signature"
+             id="approver_signature">
+
+      <button type="button"
+              id="clear-approver-signature"
+              class="secondary">
+        Clear Signature
+      </button>
+    </div>
+
+    <div class="field">
+      <label>Approval Password</label>
+      <input type="password"
+             name="approval_password"
+             placeholder="Enter approval password">
+    </div>
+
+    <div class="actions">
+      <button type="submit"
+              name="status"
+              value="Approved"
+              class="primary">
+        Approve
+      </button>
+
+      <button type="submit"
+              name="status"
+              value="Rejected"
+              class="danger">
+        Reject
+      </button>
+    </div>
+  </form>
+
+  {% elif req['status'] == 'Approved' %}
+
+  <div class="sig-block sig-pad-wrap"
+       style="padding:14px 18px; border-top:1px solid var(--line); margin-top:10px;">
+
+    <label>Mark as Paid</label>
+
+    <form method="POST"
+          action="{{ url_for('update_status', request_id=req['id']) }}"
+          id="paidForm">
+
+      <input type="hidden" name="status" value="Paid">
+
+      <div class="field" style="margin-bottom:10px;">
+        <label>Paid by (your name) *</label>
+        <input type="text"
+               name="paid_by"
+               id="paidByName"
+               required
+               placeholder="e.g. Ade Bello">
+      </div>
+
+      <label style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:6px; display:block;">
+        Sign here *
+      </label>
+
+      <canvas class="sig-pad" id="paidSigPad"></canvas>
+
+      <div class="sig-tools">
+        <button type="button" id="clearPaidSig">Clear signature</button>
+        <span class="sig-hint">Draw with your finger or mouse</span>
+      </div>
+
+      <input type="hidden"
+             name="paid_signature"
+             id="paidSignatureImage">
+
+      <div class="actions">
+        <button type="submit" class="primary">Confirm Payment</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const paidCanvas = document.getElementById('paidSigPad');
+    const paidCtx = paidCanvas.getContext('2d');
+    let paidDrawing = false;
+    let paidHasDrawn = false;
+
+    function resizePaidCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const rect = paidCanvas.getBoundingClientRect();
+
+      paidCanvas.width = rect.width * ratio;
+      paidCanvas.height = rect.height * ratio;
+
+      paidCtx.scale(ratio, ratio);
+      paidCtx.lineWidth = 2;
+      paidCtx.lineCap = 'round';
+      paidCtx.strokeStyle = '#12294d';
+    }
+
+    resizePaidCanvas();
+    window.addEventListener('resize', resizePaidCanvas);
+
+    function getPaidPos(e) {
+      const rect = paidCanvas.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+
+      return {
+        x: t.clientX - rect.left,
+        y: t.clientY - rect.top
+      };
+    }
+
+    function startPaid(e) {
+      e.preventDefault();
+      paidDrawing = true;
+
+      const p = getPaidPos(e);
+      paidCtx.beginPath();
+      paidCtx.moveTo(p.x, p.y);
+    }
+
+    function movePaid(e) {
+      if (!paidDrawing) return;
+
+      e.preventDefault();
+
+      const p = getPaidPos(e);
+      paidCtx.lineTo(p.x, p.y);
+      paidCtx.stroke();
+
+      paidHasDrawn = true;
+    }
+
+    function endPaid() {
+      paidDrawing = false;
+    }
+
+    paidCanvas.addEventListener('mousedown', startPaid);
+    paidCanvas.addEventListener('mousemove', movePaid);
+    window.addEventListener('mouseup', endPaid);
+
+    paidCanvas.addEventListener('touchstart', startPaid, { passive: false });
+    paidCanvas.addEventListener('touchmove', movePaid, { passive: false });
+    paidCanvas.addEventListener('touchend', endPaid);
+
+    document.getElementById('clearPaidSig').addEventListener('click', () => {
+      paidCtx.clearRect(0, 0, paidCanvas.width, paidCanvas.height);
+      document.getElementById('paidSignatureImage').value = '';
+      paidHasDrawn = false;
+    });
+
+    document.getElementById('paidForm').addEventListener('submit', function(e) {
+      if (!paidHasDrawn) {
+        e.preventDefault();
+        alert('Please sign to confirm payment.');
+        return;
+      }
+
+      document.getElementById('paidSignatureImage').value =
+        paidCanvas.toDataURL('image/png');
+    });
+  </script>
+
+  {% endif %}
+
+  <form action="{{ url_for('archive_request', request_id=req['id']) }}"
+        method="POST"
+        onsubmit="return confirm('Hide this request from the dashboard?');">
     <button type="submit" class="secondary">Hide Request</button>
-</form>
-
+  </form>
 
   <div class="actions" style="margin-top:20px;">
     <a href="{{ url_for('download_request', request_id=req['id']) }}"
        class="primary">
-        📄 Download PDF
+      📄 Download PDF
     </a>
 
     <a href="{{ url_for('dashboard') }}" class="back-link">
-        ← Back to Dashboard
+      ← Back to Dashboard
     </a>
+  </div>
 </div>
-<script>
-const canvas = document.getElementById("approver-signature-pad");
 
-if (canvas) {
+<script>
+  const canvas = document.getElementById("approver-signature-pad");
+
+  if (canvas) {
     const hiddenInput = document.getElementById("approver_signature");
     const clearBtn = document.getElementById("clear-approver-signature");
-
     const ctx = canvas.getContext("2d");
-canvas.width = canvas.offsetWidth;
-canvas.height = 180;
 
-ctx.lineWidth = 2;
-ctx.lineCap = "round";
+    canvas.width = canvas.offsetWidth;
+    canvas.height = 180;
 
-let drawing = false;
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
 
-function getPos(e) {
-    const rect = canvas.getBoundingClientRect();
+    let drawing = false;
 
-    if (e.touches) {
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+
+      if (e.touches) {
         return {
-            x: e.touches[0].clientX - rect.left,
-            y: e.touches[0].clientY - rect.top
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top
         };
-    }
+      }
 
-    return {
+      return {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
-    };
-}
+      };
+    }
 
-function startDrawing(e) {
-    drawing = true;
-    const pos = getPos(e);
-    ctx.beginPath();
-    ctx.moveTo(pos.x, pos.y);
-}
+    function startDrawing(e) {
+      drawing = true;
+      const pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
 
-function draw(e) {
-    if (!drawing) return;
+    function draw(e) {
+      if (!drawing) return;
 
-    e.preventDefault();
+      e.preventDefault();
 
-    const pos = getPos(e);
+      const pos = getPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
 
-    ctx.lineTo(pos.x, pos.y);
-    ctx.stroke();
-}
+    function stopDrawing() {
+      if (!drawing) return;
 
-function stopDrawing() {
-    if (!drawing) return;
+      drawing = false;
+      hiddenInput.value = canvas.toDataURL();
+      ctx.beginPath();
+    }
 
-    drawing = false;
-    hiddenInput.value = canvas.toDataURL();
-    ctx.beginPath();
-}
+    canvas.addEventListener("mousedown", startDrawing);
+    canvas.addEventListener("mousemove", draw);
+    canvas.addEventListener("mouseup", stopDrawing);
+    canvas.addEventListener("mouseleave", stopDrawing);
 
-canvas.addEventListener("mousedown", startDrawing);
-canvas.addEventListener("mousemove", draw);
-canvas.addEventListener("mouseup", stopDrawing);
-canvas.addEventListener("mouseleave", stopDrawing);
+    canvas.addEventListener("touchstart", startDrawing);
+    canvas.addEventListener("touchmove", draw);
+    canvas.addEventListener("touchend", stopDrawing);
 
-canvas.addEventListener("touchstart", startDrawing);
-canvas.addEventListener("touchmove", draw);
-canvas.addEventListener("touchend", stopDrawing);
-
-clearBtn.addEventListener("click", () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    hiddenInput.value = "";
-});
+    clearBtn.addEventListener("click", () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hiddenInput.value = "";
+    });
   }
 </script>
+
 {% endblock %}
