@@ -153,6 +153,8 @@ def init_db():
             signature_name TEXT NOT NULL,
             signature_image TEXT,
             receipt_url TEXT,
+            cur.execute("ALTER TABLE requests ADD COLUMN IF NOT EXISTS paid_by TEXT;")
+            cur.execute("ALTER TABLE requests ADD COLUMN IF NOT EXISTS paid_signature TEXT;")
             signed_on TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'Pending',
             approver_name TEXT,
