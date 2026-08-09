@@ -617,15 +617,8 @@ def update_status(request_id):
 
     new_status = request.form.get("status")
     approver_name = request.form.get("approver_name", "").strip()
-
-    if new_status in ("Approved", "Rejected"):
-        approval_password = request.form.get("approval_password", "")
-
-        if approval_password != APPROVAL_PASSWORD:
-            flash("Incorrect approval password.", "error")
-            return redirect(url_for("request_detail", request_id=request_id))
-
-    approver_signature = request.form.get("approver_signature", "").strip()
+    paid_by = request.form.get("paid_by", "").strip()
+    paid_signature = request.form.get("paid_signature", "").strip()
 
     if new_status not in ("Pending", "Approved", "Rejected", "Paid"):
         flash("Invalid status.", "error")
@@ -640,14 +633,6 @@ def update_status(request_id):
 
     elif new_status == "Paid":
         paid_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
-
-    cur.execute("""
-        SELECT ref_no, requester, gross_total
-        FROM requests
-        WHERE id = %s
-    """, (request_id,))
-
-    req = cur.fetchone()
 
     cur.execute("""
         UPDATE requests
@@ -670,11 +655,16 @@ def update_status(request_id):
     db.commit()
 
     if new_status == "Approved":
+        cur.execute(
+            "SELECT ref_no, requester, gross_total FROM requests WHERE id = %s",
+            (request_id,)
+        )
+        req_row = cur.fetchone()
+        if req_row:
         send_finance_notification(
-            req["ref_no"],
-            req["requester"],
-            req["gross_total"],
-            request_id
+            req_row["ref_no"],
+            req_row["requester"],
+            req_row["gross_total"]
         )
 
     cur.close()
