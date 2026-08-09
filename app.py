@@ -660,7 +660,7 @@ def update_status(request_id):
             (request_id,)
         )
         req_row = cur.fetchone()
-        if req_row:
+     if req_row:
         send_finance_notification(
             req_row["ref_no"],
             req_row["requester"],
