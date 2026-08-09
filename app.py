@@ -164,6 +164,10 @@ def init_db():
             created_at TEXT NOT NULL
         );
     """)
+
+    cur.execute("ALTER TABLE requests ADD COLUMN IF NOT EXISTS paid_by TEXT;")
+    cur.execute("ALTER TABLE requests ADD COLUMN IF NOT EXISTS paid_signature TEXT;")
+    cur.execute("ALTER TABLE requests ADD COLUMN IF NOT EXISTS paid_on TEXT;")
     cur.execute("""
         CREATE TABLE IF NOT EXISTS line_items (
             id SERIAL PRIMARY KEY,
