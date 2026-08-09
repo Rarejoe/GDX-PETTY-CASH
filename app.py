@@ -615,62 +615,91 @@ def update_status(request_id):
     db = get_db()
     cur = db.cursor()
 
-    new_status = request.form.get("status")
-    approver_name = request.form.get("approver_name", "").strip()
-    paid_by = request.form.get("paid_by", "").strip()
-    paid_signature = request.form.get("paid_signature", "").strip()
+    try:
+        new_status = request.form.get("status")
+        approver_name = request.form.get("approver_name", "").strip()
+        approver_signature = request.form.get("approver_signature", "").strip()
+        paid_by = request.form.get("paid_by", "").strip()
+        paid_signature = request.form.get("paid_signature", "").strip()
 
-    if new_status not in ("Pending", "Approved", "Rejected", "Paid"):
-        flash("Invalid status.", "error")
-        cur.close()
-        return redirect(url_for("request_detail", request_id=request_id))
+        if new_status not in ("Approved", "Rejected", "Paid"):
+            flash("Invalid status.", "error")
+            return redirect(url_for("request_detail", request_id=request_id))
 
-    approved_on = None
-    paid_on = None
+        # Mark as Paid: require payer details and preserve approval details.
+        if new_status == "Paid":
+            if not paid_by or not paid_signature:
+                flash("Payer name and signature are required before marking as paid.", "error")
+                return redirect(url_for("request_detail", request_id=request_id))
 
-    if new_status in ("Approved", "Rejected"):
+            paid_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
+
+            cur.execute("""
+                UPDATE requests
+                SET status = 'Paid',
+                    paid_by = %s,
+                    paid_signature = %s,
+                    paid_on = %s
+                WHERE id = %s
+                  AND status = 'Approved'
+                RETURNING id
+            """, (paid_by, paid_signature, paid_on, request_id))
+
+            if cur.fetchone() is None:
+                db.rollback()
+                flash("Only an approved request can be marked as paid.", "error")
+                return redirect(url_for("request_detail", request_id=request_id))
+
+            db.commit()
+            flash("Payment recorded successfully.", "success")
+            return redirect(url_for("request_detail", request_id=request_id))
+
+        # Approve or reject.
+        approval_password = request.form.get("approval_password", "")
+        if approval_password != APPROVAL_PASSWORD:
+            flash("Incorrect approval password.", "error")
+            return redirect(url_for("request_detail", request_id=request_id))
+
         approved_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
 
-    elif new_status == "Paid":
-        paid_on = datetime.datetime.now().strftime("%d %b %Y %I:%M %p")
+        cur.execute("""
+            UPDATE requests
+            SET status = %s,
+                approver_name = %s,
+                approver_signature = %s,
+                approved_on = %s
+            WHERE id = %s
+        """, (
+            new_status,
+            approver_name,
+            approver_signature,
+            approved_on,
+            request_id
+        ))
 
-    cur.execute("""
-        UPDATE requests
-        SET
-            status = %s,
-            approver_name = %s,
-            approver_signature = %s,
-            approved_on = COALESCE(%s, approved_on),
-            paid_on = COALESCE(%s, paid_on)
-        WHERE id = %s
-    """, (
-        new_status,
-        approver_name,
-        approver_signature,
-        approved_on,
-        paid_on,
-        request_id
-    ))
+        db.commit()
 
-    db.commit()
+        if new_status == "Approved":
+            cur.execute("""
+                SELECT ref_no, requester, gross_total
+                FROM requests
+                WHERE id = %s
+            """, (request_id,))
+            req_row = cur.fetchone()
 
-    if new_status == "Approved":
-        cur.execute(
-            "SELECT ref_no, requester, gross_total FROM requests WHERE id = %s",
-            (request_id,)
-        )
-        req_row = cur.fetchone()
-        if req_row:
-        send_finance_notification(
-            req_row["ref_no"],
-            req_row["requester"],
-            req_row["gross_total"]
-        )
+            if req_row:
+                send_finance_notification(
+                    req_row["ref_no"],
+                    req_row["requester"],
+                    req_row["gross_total"],
+                    request_id
+                )
 
-    cur.close()
+        flash(f"Request marked as {new_status}.", "success")
+        return redirect(url_for("request_detail", request_id=request_id))
 
-    flash(f"Request marked as {new_status}.", "success")
-    return redirect(url_for("request_detail", request_id=request_id))
+    finally:
+        cur.close()
 
 # ---------------------------------------------------------------------------
 # Excel export (for auditing)
